@@ -42,6 +42,7 @@
             this.processingFileLabel = new System.Windows.Forms.Label();
             this.templateLabel = new System.Windows.Forms.Label();
             this.templateTextBox = new System.Windows.Forms.TextBox();
+            this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
@@ -137,6 +138,7 @@
             this.stopButton.TabIndex = 4;
             this.stopButton.Text = "Stop";
             this.stopButton.UseVisualStyleBackColor = true;
+            this.stopButton.Click += new System.EventHandler(this.stopButton_Click);
             // 
             // resultView
             // 
@@ -205,6 +207,14 @@
             this.templateTextBox.Size = new System.Drawing.Size(104, 22);
             this.templateTextBox.TabIndex = 5;
             // 
+            // backgroundWorker
+            // 
+            this.backgroundWorker.WorkerReportsProgress = true;
+            this.backgroundWorker.WorkerSupportsCancellation = true;
+            this.backgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_DoWork);
+            this.backgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker_ProgressChanged);
+            this.backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_RunWorkerCompleted);
+            // 
             // SearchForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -238,6 +248,7 @@
         private System.Windows.Forms.Button stopButton;
         private System.Windows.Forms.Label templateLabel;
         private System.Windows.Forms.TextBox templateTextBox;
+        private System.ComponentModel.BackgroundWorker backgroundWorker;
     }
 }
 

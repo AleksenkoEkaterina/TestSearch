@@ -8,20 +8,24 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Threading;
+using System.Diagnostics;
 
 namespace TestSearch
 {
     public partial class SearchForm : Form
     {
+
+        
+     //   private BackgroundWorker searchBackgroundWorker;
         public SearchForm()
         {
+
             InitializeComponent();
             iconList.Images.Add("folder", new Bitmap(Properties.Resources.folder_open.ToBitmap()));
             iconList.Images.Add("document", new Bitmap(Properties.Resources.Generic_Document.ToBitmap()));
             dirTextBox.Text=Properties.Settings.Default.targetDirectory;
-        /*    addToTree(@"H:\Downloads\Antimatter\");
-            addToTree(@"H:\Downloads\Arven - Music Of Light - 2011 (320 kbps)");
-            addToTree(@"H:\Downloads\Dominia - Judgement Of Tormented Souls\01. Prelude.mp3");*/
+        
             
         }
 
@@ -49,17 +53,17 @@ namespace TestSearch
             }
             catch(FileNotFoundException ex)
             {
-                Console.WriteLine("File not found: " + fullPath);
+                Console.Error.WriteLine("File not found: " + fullPath);
                 return false;
             }
             catch(DirectoryNotFoundException ex)
             {
-                Console.WriteLine("Directory not found: " + fullPath);
+                Console.Error.WriteLine("Directory not found: " + fullPath);
                 return false;
             }
             catch
             {
-                Console.WriteLine("Internal error: " + fullPath);
+                Console.Error.WriteLine("Internal error: " + fullPath);
                 return false;
             }
 
@@ -142,57 +146,99 @@ namespace TestSearch
             
         }
 
-        private void treeSearch(DirectoryInfo directory, string pattern)
+        private List<string> addToTreeBuffer = new List<string>();
+        private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            DirectoryInfo[] subDirs={};
+            List<object> obj_list = e.Argument as List<object>;
+            DirectoryInfo dir = obj_list[0] as DirectoryInfo;
+            string template = obj_list[1] as string;
+
+            
+            TreeSearchBackground(dir, template, e);
+            backgroundWorker.ReportProgress(0, new List<string>(addToTreeBuffer));
+        }
+
+        private void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            List<string> toAdd = e.UserState as List<string>;
+            foreach (string path in toAdd)
+            {
+                addToTree(path);
+            }
+        }
+
+        private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            addToTreeBuffer.Clear();
+        }
+
+        
+
+        private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e)
+        {
+            DirectoryInfo[] subDirs = { };
             try
             {
                 subDirs = directory.GetDirectories();
             }
             catch (DirectoryNotFoundException ex)
             {
-                Console.WriteLine("Directory not found: " + directory.Name);
+                Console.Error.WriteLine("Directory not found: " + directory.Name);
             }
             catch (System.Security.SecurityException ex)
             {
-                Console.WriteLine("Security exception: " + directory.Name);
+                Console.Error.WriteLine("Security exception: " + directory.Name);
             }
             catch (UnauthorizedAccessException ex)
             {
-                Console.WriteLine("No rights to access: " + directory.Name);
+                Console.Error.WriteLine("No rights to access: " + directory.Name);
             }
             catch
             {
-                Console.WriteLine(directory.FullName);
+                Console.Error.WriteLine(directory.FullName);
             }
-           /* foreach (DirectoryInfo dir in subDirs)
+            if(backgroundWorker.CancellationPending)
             {
-                FileInfo[] sub_matches=dir.GetFiles(pattern);
-                foreach(FileInfo match in matches)
-                {
-                    addToTree(match.FullName);
-                }
-                treeSearch(dir, pattern);
-            }*/
-           
+                e.Cancel=true;
+                return;
+            }
             foreach (DirectoryInfo dir in subDirs)
             {
-                treeSearch(dir, pattern);
+                TreeSearchBackground(dir, pattern, e);
             }
-            FileInfo[] matches = directory.GetFiles(pattern);
+            FileInfo[] matches = {};
+            try
+            {
+                matches = directory.GetFiles(pattern);
+            }
+            catch(System.Security.SecurityException ex)
+            {
+                Console.Error.WriteLine("Security exception:" + directory.FullName);
+            }
             foreach (FileInfo match in matches)
             {
-                addToTree(match.FullName);
-            }
-           // treeSearch(dir, pattern);
-            
-            
+                Thread.Sleep(1); //Too fast search, too slow GUI    
+                if (backgroundWorker.CancellationPending)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+                addToTreeBuffer.Add(match.FullName);
+                if (addToTreeBuffer.Count>100)
+                {   
+                    backgroundWorker.ReportProgress(0, new List<string>(addToTreeBuffer));
+                    addToTreeBuffer.Clear();
+                }
+            }        
+
         }
 
         private void searchButton_Click(object sender, EventArgs e)
         {
+
             //start with validating path
             string folderPath = Properties.Settings.Default.targetDirectory;
+            stopButton.Enabled = true;
             resultView.Nodes.Clear();
             FileAttributes attr; //Let's validate our path
             try
@@ -201,27 +247,36 @@ namespace TestSearch
             }
             catch (FileNotFoundException ex)
             {
-                Console.WriteLine("File not found: " + folderPath);
+                Console.Error.WriteLine("File not found: " + folderPath);
                 return;
             }
             catch (DirectoryNotFoundException ex)
             {
-                Console.WriteLine("Directory not found: " + folderPath);
+                Console.Error.WriteLine("Directory not found: " + folderPath);
                 return;
             }
             catch
             {
-                Console.WriteLine("Internal error: " + folderPath);
+                Console.Error.WriteLine("Internal error: " + folderPath);
                 return;
             }
             bool isDirectory = ((attr & FileAttributes.Directory) == FileAttributes.Directory);
             folderPath = folderPath.TrimEnd(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
             if (!isDirectory) folderPath = folderPath.Remove(folderPath.LastIndexOf(Path.DirectorySeparatorChar) + 1);
-            treeSearch(new DirectoryInfo(folderPath), templateTextBox.Text);
-        //    string[] dirs = folder.Split(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
-
-
+            List<object> arguments=new List<object>();
+            arguments.Add(new DirectoryInfo(folderPath));
+            arguments.Add(templateTextBox.Text);
+            while (backgroundWorker.IsBusy) { } //Wait for it
+            backgroundWorker.RunWorkerAsync(arguments);
+         
         }
+
+        private void stopButton_Click(object sender, EventArgs e)
+        {
+            backgroundWorker.CancelAsync();
+        }
+
+        
 
       
     }
