@@ -272,14 +272,22 @@ namespace TestSearch
             {
                 Console.Error.WriteLine("Security exception:" + directory.FullName);
             }
+            catch (System.UnauthorizedAccessException ex)
+            {
+                Console.Error.WriteLine("No access:" + directory.FullName);
+            }
+            catch
+            {
+                Console.Error.WriteLine("Internal error:" + directory.FullName);
+            }
             foreach (FileInfo file in files)
             {
-                if (time.ElapsedMilliseconds < 2)
-                    Thread.Sleep(1); //Sometimes slightly unresponsive... but fast.
-                //Maybe I should just NOT send progress?
-                backgroundWorker.ReportProgress(0, file.FullName);
-                time.Restart();
-
+                if (time.ElapsedMilliseconds > 2)
+                {
+                    backgroundWorker.ReportProgress(0, file.FullName); //We'll lose some filenames here...
+                    //...but no one can read this fast anyway
+                    time.Restart();
+                }
                 if (backgroundWorker.CancellationPending)
                 {
                     e.Cancel = true;
@@ -288,13 +296,10 @@ namespace TestSearch
                 Match m = Regex.Match(file.Name, pattern);
                 if (m.Success)
                 {
-                    if (time.ElapsedMilliseconds < 2)
-                        Thread.Sleep(1);
-
-                    backgroundWorker.ReportProgress(100, file.FullName); //Show only found files, this is too fast anyway
+                    backgroundWorker.ReportProgress(100, file.FullName);
                     time.Restart();
                 }
-                inTextSearch(file, e, pattern, binaryCheck);
+                if(inText==true)inTextSearch(file, e, pattern, binaryCheck);
             }
               
             if (backgroundWorker.CancellationPending)
@@ -325,7 +330,6 @@ namespace TestSearch
                     Match m = Regex.Match(contents.ToLower(), pattern.ToLower());
                     if (m.Success)
                     {
-                        if (time.ElapsedMilliseconds < 5) Thread.Sleep(1);
                         backgroundWorker.ReportProgress(100, file.FullName);
                         time.Restart();
                         break;
