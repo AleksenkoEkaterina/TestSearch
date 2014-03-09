@@ -34,18 +34,26 @@
             this.dirLabel = new System.Windows.Forms.Label();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.templateLabel = new System.Windows.Forms.Label();
+            this.templateTextBox = new System.Windows.Forms.TextBox();
             this.searchButton = new System.Windows.Forms.Button();
             this.stopButton = new System.Windows.Forms.Button();
             this.resultView = new System.Windows.Forms.TreeView();
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
             this.processingLabel = new System.Windows.Forms.Label();
             this.processingFileLabel = new System.Windows.Forms.Label();
-            this.templateLabel = new System.Windows.Forms.Label();
-            this.templateTextBox = new System.Windows.Forms.TextBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
+            this.inTextCheck = new System.Windows.Forms.CheckBox();
+            this.binaryCheckCheck = new System.Windows.Forms.CheckBox();
+            this.checkBox4 = new System.Windows.Forms.CheckBox();
+            this.patternCheck = new System.Windows.Forms.CheckBox();
             this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
+            this.groupBox1.SuspendLayout();
+            this.tableLayoutPanel4.SuspendLayout();
             this.SuspendLayout();
             // 
             // dirTextBox
@@ -81,14 +89,16 @@
             this.tableLayoutPanel1.ColumnCount = 1;
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel2, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.resultView, 0, 2);
-            this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel3, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(this.resultView, 0, 3);
+            this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel3, 0, 2);
+            this.tableLayoutPanel1.Controls.Add(this.groupBox1, 0, 1);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 3;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+            this.tableLayoutPanel1.RowCount = 4;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel1.Size = new System.Drawing.Size(400, 542);
@@ -116,6 +126,28 @@
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel2.Size = new System.Drawing.Size(394, 54);
             this.tableLayoutPanel2.TabIndex = 0;
+            // 
+            // templateLabel
+            // 
+            this.templateLabel.AutoSize = true;
+            this.templateLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.templateLabel.Location = new System.Drawing.Point(3, 28);
+            this.templateLabel.Name = "templateLabel";
+            this.templateLabel.Size = new System.Drawing.Size(116, 29);
+            this.templateLabel.TabIndex = 6;
+            this.templateLabel.Text = "Search template:";
+            this.templateLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // templateTextBox
+            // 
+            this.templateTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.templateTextBox.Location = new System.Drawing.Point(125, 31);
+            this.templateTextBox.MinimumSize = new System.Drawing.Size(70, 4);
+            this.templateTextBox.Name = "templateTextBox";
+            this.templateTextBox.Size = new System.Drawing.Size(104, 22);
+            this.templateTextBox.TabIndex = 5;
+            this.templateTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.templateTextBox_KeyUp);
+            this.templateTextBox.Leave += new System.EventHandler(this.templateTextBox_Leave);
             // 
             // searchButton
             // 
@@ -145,20 +177,22 @@
             this.resultView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.resultView.ImageIndex = 0;
             this.resultView.ImageList = this.iconList;
-            this.resultView.Location = new System.Drawing.Point(3, 98);
+            this.resultView.Location = new System.Drawing.Point(3, 198);
             this.resultView.Name = "resultView";
             this.resultView.SelectedImageIndex = 0;
-            this.resultView.Size = new System.Drawing.Size(394, 441);
+            this.resultView.Size = new System.Drawing.Size(394, 341);
             this.resultView.TabIndex = 1;
             // 
             // tableLayoutPanel3
             // 
             this.tableLayoutPanel3.ColumnCount = 2;
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel3.Controls.Add(this.processingLabel, 0, 0);
             this.tableLayoutPanel3.Controls.Add(this.processingFileLabel, 1, 0);
-            this.tableLayoutPanel3.Location = new System.Drawing.Point(3, 63);
+            this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel3.Location = new System.Drawing.Point(3, 163);
             this.tableLayoutPanel3.Name = "tableLayoutPanel3";
             this.tableLayoutPanel3.RowCount = 1;
             this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -187,25 +221,76 @@
             this.processingFileLabel.Text = "filename";
             this.processingFileLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
-            // templateLabel
+            // groupBox1
             // 
-            this.templateLabel.AutoSize = true;
-            this.templateLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.templateLabel.Location = new System.Drawing.Point(3, 28);
-            this.templateLabel.Name = "templateLabel";
-            this.templateLabel.Size = new System.Drawing.Size(116, 29);
-            this.templateLabel.TabIndex = 6;
-            this.templateLabel.Text = "Search template:";
-            this.templateLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.groupBox1.AutoSize = true;
+            this.groupBox1.Controls.Add(this.tableLayoutPanel4);
+            this.groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBox1.Location = new System.Drawing.Point(3, 63);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(394, 94);
+            this.groupBox1.TabIndex = 3;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Search options";
             // 
-            // templateTextBox
+            // tableLayoutPanel4
             // 
-            this.templateTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.templateTextBox.Location = new System.Drawing.Point(125, 31);
-            this.templateTextBox.MinimumSize = new System.Drawing.Size(70, 4);
-            this.templateTextBox.Name = "templateTextBox";
-            this.templateTextBox.Size = new System.Drawing.Size(104, 22);
-            this.templateTextBox.TabIndex = 5;
+            this.tableLayoutPanel4.ColumnCount = 2;
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanel4.Controls.Add(this.inTextCheck, 0, 0);
+            this.tableLayoutPanel4.Controls.Add(this.binaryCheckCheck, 0, 1);
+            this.tableLayoutPanel4.Controls.Add(this.checkBox4, 1, 1);
+            this.tableLayoutPanel4.Controls.Add(this.patternCheck, 1, 0);
+            this.tableLayoutPanel4.Location = new System.Drawing.Point(6, 21);
+            this.tableLayoutPanel4.Name = "tableLayoutPanel4";
+            this.tableLayoutPanel4.RowCount = 2;
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel4.Size = new System.Drawing.Size(388, 53);
+            this.tableLayoutPanel4.TabIndex = 0;
+            // 
+            // inTextCheck
+            // 
+            this.inTextCheck.AutoSize = true;
+            this.inTextCheck.Location = new System.Drawing.Point(3, 3);
+            this.inTextCheck.Name = "inTextCheck";
+            this.inTextCheck.Size = new System.Drawing.Size(67, 21);
+            this.inTextCheck.TabIndex = 0;
+            this.inTextCheck.Text = "In text";
+            this.inTextCheck.UseVisualStyleBackColor = true;
+            this.inTextCheck.CheckedChanged += new System.EventHandler(this.inTextCheck_CheckedChanged);
+            // 
+            // binaryCheckCheck
+            // 
+            this.binaryCheckCheck.AutoSize = true;
+            this.binaryCheckCheck.Location = new System.Drawing.Point(3, 30);
+            this.binaryCheckCheck.Name = "binaryCheckCheck";
+            this.binaryCheckCheck.Size = new System.Drawing.Size(111, 21);
+            this.binaryCheckCheck.TabIndex = 1;
+            this.binaryCheckCheck.Text = "Binary check";
+            this.binaryCheckCheck.UseVisualStyleBackColor = true;
+            this.binaryCheckCheck.CheckedChanged += new System.EventHandler(this.binaryCheckCheck_CheckedChanged);
+            // 
+            // checkBox4
+            // 
+            this.checkBox4.AutoSize = true;
+            this.checkBox4.Location = new System.Drawing.Point(120, 30);
+            this.checkBox4.Name = "checkBox4";
+            this.checkBox4.Size = new System.Drawing.Size(98, 21);
+            this.checkBox4.TabIndex = 3;
+            this.checkBox4.Text = "checkBox4";
+            this.checkBox4.UseVisualStyleBackColor = true;
+            // 
+            // patternCheck
+            // 
+            this.patternCheck.AutoSize = true;
+            this.patternCheck.Location = new System.Drawing.Point(120, 3);
+            this.patternCheck.Name = "patternCheck";
+            this.patternCheck.Size = new System.Drawing.Size(76, 21);
+            this.patternCheck.TabIndex = 2;
+            this.patternCheck.Text = "Pattern";
+            this.patternCheck.UseVisualStyleBackColor = true;
             // 
             // backgroundWorker
             // 
@@ -225,10 +310,14 @@
             this.Name = "SearchForm";
             this.Text = "Search";
             this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel1.PerformLayout();
             this.tableLayoutPanel2.ResumeLayout(false);
             this.tableLayoutPanel2.PerformLayout();
             this.tableLayoutPanel3.ResumeLayout(false);
             this.tableLayoutPanel3.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
+            this.tableLayoutPanel4.ResumeLayout(false);
+            this.tableLayoutPanel4.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -249,6 +338,12 @@
         private System.Windows.Forms.Label templateLabel;
         private System.Windows.Forms.TextBox templateTextBox;
         private System.ComponentModel.BackgroundWorker backgroundWorker;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel4;
+        private System.Windows.Forms.CheckBox inTextCheck;
+        private System.Windows.Forms.CheckBox binaryCheckCheck;
+        private System.Windows.Forms.CheckBox patternCheck;
+        private System.Windows.Forms.CheckBox checkBox4;
     }
 }
 

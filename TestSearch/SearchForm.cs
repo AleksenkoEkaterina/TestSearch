@@ -10,21 +10,24 @@ using System.Windows.Forms;
 using System.IO;
 using System.Threading;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace TestSearch
 {
     public partial class SearchForm : Form
     {
-
-        
-     //   private BackgroundWorker searchBackgroundWorker;
-        public SearchForm()
+     
+       public SearchForm()
         {
 
             InitializeComponent();
+            binaryCheckCheck.Checked = Properties.Settings.Default.binaryCheck;
+            inTextCheck.Checked = Properties.Settings.Default.inText;
             iconList.Images.Add("folder", new Bitmap(Properties.Resources.folder_open.ToBitmap()));
             iconList.Images.Add("document", new Bitmap(Properties.Resources.Generic_Document.ToBitmap()));
             dirTextBox.Text=Properties.Settings.Default.targetDirectory;
+            processingFileLabel.Text = "";
+            templateTextBox.Text = Properties.Settings.Default.pattern;
         
             
         }
@@ -120,6 +123,7 @@ namespace TestSearch
             //adding branch
             //folders
             int shift=0;
+            if (index > dirs.Length - 1) return false; //existing
             if (!isDirectory) shift = 1;
             TreeNode addNode;
             for (; index < dirs.Length-shift; index++ )
@@ -128,6 +132,7 @@ namespace TestSearch
                 addNode=new TreeNode(dirs[index]);
                 addNode.Tag = new DirectoryInfo(path);
                 addNode.ImageKey = "folder";
+                addNode.SelectedImageKey = "folder";
                 currentNode.Nodes.Add(addNode);
                 currentNode.Expand();
                 currentNode = addNode;
@@ -139,6 +144,7 @@ namespace TestSearch
                 addNode = new TreeNode(dirs[index]);
                 addNode.Tag = new FileInfo(path);
                 addNode.ImageKey = "document";
+                addNode.SelectedImageKey = "document";
                 currentNode.Nodes.Add(addNode);
                 currentNode.Expand();
             }
@@ -146,35 +152,59 @@ namespace TestSearch
             
         }
 
-        private List<string> addToTreeBuffer = new List<string>();
+     //   private List<string> addToTreeBuffer = new List<string>();
+
+        private Stopwatch time = new Stopwatch();
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             List<object> obj_list = e.Argument as List<object>;
+            time.Start();
             DirectoryInfo dir = obj_list[0] as DirectoryInfo;
             string template = obj_list[1] as string;
+            bool? inText=obj_list[2] as bool?;
+            bool? binaryCheck = obj_list[3] as bool?;
+            
 
             
-            TreeSearchBackground(dir, template, e);
-            backgroundWorker.ReportProgress(0, new List<string>(addToTreeBuffer));
+            TreeSearchBackground(dir, template, e, inText, binaryCheck);
+            time.Reset();
         }
 
         private void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            List<string> toAdd = e.UserState as List<string>;
+        /*    List<string> toAdd = e.UserState as List<string>;
             foreach (string path in toAdd)
+            {*/
+            int state = e.ProgressPercentage;
+            string path = e.UserState as string;
+            if (state > 0)
             {
                 addToTree(path);
+                resultView.Update();
             }
+            if(state !=50)
+            {
+                processingFileLabel.Text = path as string;
+                processingFileLabel.Update();
+            }
+           
+           /* }*/
         }
 
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            addToTreeBuffer.Clear();
+          //  addToTreeBuffer.Clear();
+            searchButton.Enabled = true;
         }
 
-        
 
-        private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e)
+        public static string WildcardToRegex(string pattern)
+        {
+            return "^" + Regex.Escape(pattern).
+            Replace("\\*", ".*").
+            Replace("\\?", ".") + "$";
+        }
+        private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck)
         {
             DirectoryInfo[] subDirs = { };
             try
@@ -204,8 +234,10 @@ namespace TestSearch
             }
             foreach (DirectoryInfo dir in subDirs)
             {
-                TreeSearchBackground(dir, pattern, e);
+                TreeSearchBackground(dir, pattern, e, inText, binaryCheck);
             }
+
+
             FileInfo[] matches = {};
             try
             {
@@ -217,26 +249,73 @@ namespace TestSearch
             }
             foreach (FileInfo match in matches)
             {
-                Thread.Sleep(1); //Too fast search, too slow GUI    
-                if (backgroundWorker.CancellationPending)
+                
+                     //Too fast search, too slow GUI
+                    //Flooded with events
+                    //Won't get a faster search anyway
+                    //Will fix it for calculators =)
+                    if (backgroundWorker.CancellationPending)
+                    {
+                        e.Cancel = true;
+                        return;
+                    }             
+                if (time.ElapsedMilliseconds < 50)
                 {
-                    e.Cancel = true;
-                    return;
+                    Thread.Sleep(10);
+                    time.Restart();      
                 }
-                addToTreeBuffer.Add(match.FullName);
-                if (addToTreeBuffer.Count>100)
-                {   
-                    backgroundWorker.ReportProgress(0, new List<string>(addToTreeBuffer));
-                    addToTreeBuffer.Clear();
+                backgroundWorker.ReportProgress(100, match.FullName); //Show only found files, this is too fast anyway
+            }
+            if(inText==true)
+            {
+                inTextSearch(directory, pattern, binaryCheck);
+            }
+        }
+        private bool doBinaryCheck(string str)
+        {
+           return str.Contains("\0\0");
+        }
+        private void inTextSearch(DirectoryInfo directory, string pattern, bool? binaryCheck)
+        {
+            string regexPattern = WildcardToRegex(pattern);
+            FileInfo[] files={};
+            try
+            {
+                files = directory.GetFiles();
+            }
+            catch (System.Security.SecurityException ex)
+            {
+                Console.Error.WriteLine("Security exception:" + directory.FullName);
+            }
+
+            foreach (FileInfo file in files)
+            {
+                if(time.ElapsedMilliseconds<50)
+                {
+                    Thread.Sleep(10);
+                    time.Restart();
                 }
-            }        
+                backgroundWorker.ReportProgress(0, file.FullName);
+                using (StreamReader reader = new StreamReader(file.FullName))
+                {
+                    while (reader.EndOfStream == false)
+                    {
+                        string contents = reader.ReadLine();
+                        if (binaryCheck == true && doBinaryCheck(contents) == true) break;
+                        Match m = Regex.Match(contents.ToLower(), regexPattern.ToLower());
+                        if (m.Success)
+                        {
+                            backgroundWorker.ReportProgress(50, file.FullName);
+                            break;
+                        }
+                    }
+                }
+            }
 
         }
 
-        private void searchButton_Click(object sender, EventArgs e)
+        private void startSearch()
         {
-
-            //start with validating path
             string folderPath = Properties.Settings.Default.targetDirectory;
             stopButton.Enabled = true;
             resultView.Nodes.Clear();
@@ -263,17 +342,56 @@ namespace TestSearch
             bool isDirectory = ((attr & FileAttributes.Directory) == FileAttributes.Directory);
             folderPath = folderPath.TrimEnd(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
             if (!isDirectory) folderPath = folderPath.Remove(folderPath.LastIndexOf(Path.DirectorySeparatorChar) + 1);
-            List<object> arguments=new List<object>();
+            List<object> arguments = new List<object>();
             arguments.Add(new DirectoryInfo(folderPath));
             arguments.Add(templateTextBox.Text);
+            arguments.Add((bool?)inTextCheck.Checked);
+            arguments.Add((bool?)binaryCheckCheck.Checked);
             while (backgroundWorker.IsBusy) { } //Wait for it
+            searchButton.Enabled = false;
             backgroundWorker.RunWorkerAsync(arguments);
+        }
+
+        private void searchButton_Click(object sender, EventArgs e)
+        {
+            startSearch();
+            //start with validating path
+            
          
         }
 
         private void stopButton_Click(object sender, EventArgs e)
         {
             backgroundWorker.CancelAsync();
+            searchButton.Enabled = true;
+        }
+
+        private void binaryCheckCheck_CheckedChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.binaryCheck = binaryCheckCheck.Checked;
+            Properties.Settings.Default.Save();
+        }
+
+        private void inTextCheck_CheckedChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.inText= inTextCheck.Checked;
+            Properties.Settings.Default.Save();
+        }
+
+        private void templateTextBox_Leave(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.pattern = templateTextBox.Text;
+            Properties.Settings.Default.Save();
+        }
+
+        private void templateTextBox_KeyUp(object sender, KeyEventArgs e)
+        {
+            if(e.KeyCode==Keys.Enter)
+            {
+                Properties.Settings.Default.pattern = templateTextBox.Text;
+                Properties.Settings.Default.Save();
+                startSearch();
+            }
         }
 
         
