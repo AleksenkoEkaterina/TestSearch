@@ -173,15 +173,8 @@ namespace TestSearch
 
         private void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-        /*    List<string> toAdd = e.UserState as List<string>;
-            foreach (string path in toAdd)
-            {*/
             int state = e.ProgressPercentage;
             string path = e.UserState as string;
-            if (path == @"H:\Downloads\True_Patch_Gold_FINAL_with_Hotfix7\True_Patch_Gold_FINAL_with_Hotfix7\Extras\Optional ")
-            {
-                int i = 0;
-            }
             if (state > 0)
             {
                 addToTree(path);
@@ -192,13 +185,10 @@ namespace TestSearch
                 processingFileLabel.Text = path;
                 processingFileLabel.Update();
             }
-           
-           /* }*/
         }
 
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-          //  addToTreeBuffer.Clear();
             searchButton.Enabled = true;
         }
 
@@ -258,7 +248,7 @@ namespace TestSearch
                 
                      //Too fast search, too slow GUI
                     //Flooded with events
-                    //Won't get a faster search anyway
+                    //Won't get a faster real time search anyway
                     if (backgroundWorker.CancellationPending)
                     {
                         e.Cancel = true;
@@ -278,7 +268,7 @@ namespace TestSearch
         }
         private bool doBinaryCheck(string str)
         {
-           return str.Contains("\0\0");
+           return str.Contains("\0\0"); //Quite simple
         }
         private void inTextSearch(DirectoryInfo directory, string pattern, bool? binaryCheck)
         {
@@ -431,14 +421,6 @@ namespace TestSearch
 
                 }
             }
-       /*     OpenFileDialog ofl = new OpenFileDialog();
-            ofl.InitialDirectory = Properties.Settings.Default.targetDirectory;
-            if(ofl.ShowDialog()==DialogResult.OK)
-            {
-                dirTextBox.Text = ofl.FileName;
-                Properties.Settings.Default.targetDirectory = dirTextBox.Text;
-                Properties.Settings.Default.Save();
-            }*/
         }
 
         
