@@ -58,6 +58,8 @@
             this.elapsedTime = new System.Windows.Forms.Label();
             this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.elapsedTimeTimer = new System.Windows.Forms.Timer(this.components);
+            this.folderCheck = new System.Windows.Forms.CheckBox();
+            this.caseCheck = new System.Windows.Forms.CheckBox();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
@@ -99,7 +101,7 @@
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 5;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 87F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 140F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 45F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 90F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -206,10 +208,10 @@
             this.resultView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.resultView.ImageIndex = 0;
             this.resultView.ImageList = this.iconList;
-            this.resultView.Location = new System.Drawing.Point(3, 297);
+            this.resultView.Location = new System.Drawing.Point(3, 350);
             this.resultView.Name = "resultView";
             this.resultView.SelectedImageIndex = 0;
-            this.resultView.Size = new System.Drawing.Size(563, 210);
+            this.resultView.Size = new System.Drawing.Size(563, 157);
             this.resultView.TabIndex = 1;
             this.resultView.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.resultView_NodeMouseDoubleClick);
             // 
@@ -222,7 +224,7 @@
             this.tableLayoutPanel3.Controls.Add(this.processingFileLabel, 1, 0);
             this.tableLayoutPanel3.Controls.Add(this.processingLabel, 0, 0);
             this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel3.Location = new System.Drawing.Point(3, 162);
+            this.tableLayoutPanel3.Location = new System.Drawing.Point(3, 215);
             this.tableLayoutPanel3.Name = "tableLayoutPanel3";
             this.tableLayoutPanel3.RowCount = 1;
             this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle());
@@ -258,7 +260,7 @@
             this.groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.groupBox1.Location = new System.Drawing.Point(3, 75);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(563, 81);
+            this.groupBox1.Size = new System.Drawing.Size(563, 134);
             this.groupBox1.TabIndex = 3;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Search options";
@@ -272,12 +274,16 @@
             this.tableLayoutPanel4.Controls.Add(this.binaryCheckCheck, 0, 1);
             this.tableLayoutPanel4.Controls.Add(this.wildRadioButton, 1, 0);
             this.tableLayoutPanel4.Controls.Add(this.regRadioButton, 1, 1);
+            this.tableLayoutPanel4.Controls.Add(this.folderCheck, 0, 2);
+            this.tableLayoutPanel4.Controls.Add(this.caseCheck, 0, 3);
             this.tableLayoutPanel4.Location = new System.Drawing.Point(6, 21);
             this.tableLayoutPanel4.Name = "tableLayoutPanel4";
-            this.tableLayoutPanel4.RowCount = 2;
+            this.tableLayoutPanel4.RowCount = 4;
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel4.Size = new System.Drawing.Size(388, 53);
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel4.Size = new System.Drawing.Size(388, 108);
             this.tableLayoutPanel4.TabIndex = 0;
             // 
             // inTextCheck
@@ -306,7 +312,7 @@
             // 
             this.wildRadioButton.AutoSize = true;
             this.wildRadioButton.Checked = true;
-            this.wildRadioButton.Location = new System.Drawing.Point(120, 3);
+            this.wildRadioButton.Location = new System.Drawing.Point(130, 3);
             this.wildRadioButton.Name = "wildRadioButton";
             this.wildRadioButton.Size = new System.Drawing.Size(91, 21);
             this.wildRadioButton.TabIndex = 2;
@@ -318,7 +324,7 @@
             // regRadioButton
             // 
             this.regRadioButton.AutoSize = true;
-            this.regRadioButton.Location = new System.Drawing.Point(120, 30);
+            this.regRadioButton.Location = new System.Drawing.Point(130, 30);
             this.regRadioButton.Name = "regRadioButton";
             this.regRadioButton.Size = new System.Drawing.Size(77, 21);
             this.regRadioButton.TabIndex = 3;
@@ -337,7 +343,7 @@
             this.tableLayoutPanel5.Controls.Add(this.timeLabel, 0, 0);
             this.tableLayoutPanel5.Controls.Add(this.elapsedTime, 1, 0);
             this.tableLayoutPanel5.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel5.Location = new System.Drawing.Point(3, 207);
+            this.tableLayoutPanel5.Location = new System.Drawing.Point(3, 260);
             this.tableLayoutPanel5.Name = "tableLayoutPanel5";
             this.tableLayoutPanel5.RowCount = 3;
             this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
@@ -425,6 +431,30 @@
             this.elapsedTimeTimer.Interval = 200;
             this.elapsedTimeTimer.Tick += new System.EventHandler(this.elapsedTimeTimer_Tick);
             // 
+            // folderCheck
+            // 
+            this.folderCheck.AutoSize = true;
+            this.folderCheck.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.folderCheck.Location = new System.Drawing.Point(3, 57);
+            this.folderCheck.Name = "folderCheck";
+            this.folderCheck.Size = new System.Drawing.Size(121, 21);
+            this.folderCheck.TabIndex = 4;
+            this.folderCheck.Text = "Folders";
+            this.folderCheck.UseVisualStyleBackColor = true;
+            this.folderCheck.CheckedChanged += new System.EventHandler(this.folderCheck_CheckedChanged);
+            // 
+            // caseCheck
+            // 
+            this.caseCheck.AutoSize = true;
+            this.caseCheck.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.caseCheck.Location = new System.Drawing.Point(3, 84);
+            this.caseCheck.Name = "caseCheck";
+            this.caseCheck.Size = new System.Drawing.Size(121, 21);
+            this.caseCheck.TabIndex = 5;
+            this.caseCheck.Text = "Case sensitive";
+            this.caseCheck.UseVisualStyleBackColor = true;
+            this.caseCheck.CheckedChanged += new System.EventHandler(this.caseCheck_CheckedChanged);
+            // 
             // SearchForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -479,6 +509,8 @@
         private System.Windows.Forms.Label processedNum;
         private System.Windows.Forms.Label foundLabel;
         private System.Windows.Forms.Label foundNum;
+        private System.Windows.Forms.CheckBox folderCheck;
+        private System.Windows.Forms.CheckBox caseCheck;
     }
 }
 

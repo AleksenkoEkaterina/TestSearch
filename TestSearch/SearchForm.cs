@@ -29,7 +29,6 @@ namespace TestSearch
             dirTextBox.Text = Properties.Settings.Default.targetDirectory;
             processingFileLabel.Text = "";
             elapsedTime.Text = new TimeSpan(0, 0, 0, 0, 0).ToString(@"hh\:mm\:ss\.fff");
-         //   p_num = 0;
             f_num = 0;
             processedNum.Text = 0.ToString();
             foundNum.Text = 0.ToString();
@@ -37,6 +36,9 @@ namespace TestSearch
             if (inTextCheck.Checked == false) binaryCheckCheck.Enabled = false;
             wildRadioButton.Checked = Properties.Settings.Default.wildcards;
             regRadioButton.Checked = !Properties.Settings.Default.wildcards;
+            folderCheck.Checked = Properties.Settings.Default.folders;
+            caseCheck.Checked = Properties.Settings.Default.caseSensitive;
+
         }
 
         private void dirTextBox_Leave(object sender, EventArgs e)
@@ -170,10 +172,12 @@ namespace TestSearch
             bool? inText=obj_list[2] as bool?;
             bool? binaryCheck = obj_list[3] as bool?;
             bool? regexp = obj_list[4] as bool?;
+            bool? folders = obj_list[5] as bool?;
+            bool? caseSensitive = obj_list[6] as bool?;
             if (regexp == false) template = WildcardToRegex(template);
             p_num = 0;
             time.Start();
-            TreeSearchBackground(dir, template, e, inText, binaryCheck);
+            TreeSearchBackground(dir, template, e, inText, binaryCheck, folders, caseSensitive);
             backgroundWorker.ReportProgress(0, new object[]{last_name, (int?)p_num});
             time.Reset();
         }
@@ -226,6 +230,9 @@ namespace TestSearch
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             searchButton.Enabled = true;
+            dirTextBox.Enabled = true;
+            templateTextBox.Enabled = true;
+
             elapsedTimeWatch.Reset();
             elapsedTimeTimer.Stop();
         }
@@ -235,7 +242,7 @@ namespace TestSearch
         {
             return "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
         }
-        private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck)
+        private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck, bool? folders, bool? caseSensitive)
         {
             DirectoryInfo[] subDirs = { };      
             try
@@ -265,7 +272,18 @@ namespace TestSearch
             }
             foreach (DirectoryInfo dir in subDirs)
             {
-                TreeSearchBackground(dir, pattern, e, inText, binaryCheck);
+                if (folders == true)
+                {
+                    Match m;
+                    if(caseSensitive==false) m = Regex.Match(dir.Name, pattern, RegexOptions.IgnoreCase);
+                    else m = Regex.Match(dir.Name, pattern);
+                    if (m.Success)
+                    {
+                        backgroundWorker.ReportProgress(100, dir.FullName);
+                        time.Restart();
+                    }
+                }
+                TreeSearchBackground(dir, pattern, e, inText, binaryCheck, folders, caseSensitive);
             }
 
             FileInfo[] files = { };
@@ -302,13 +320,16 @@ namespace TestSearch
                     e.Cancel = true;
                     return;
                 }
-                Match m = Regex.Match(file.Name, pattern);
+              
+                Match m;
+                if (caseSensitive == false) m = Regex.Match(file.Name, pattern, RegexOptions.IgnoreCase);
+                else m = Regex.Match(file.Name, pattern);
                 if (m.Success)
                 {
                     backgroundWorker.ReportProgress(100, file.FullName);
                     time.Restart();
                 }
-                if(inText==true)inTextSearch(file, e, pattern, binaryCheck);
+                if(inText==true)inTextSearch(file, e, pattern, binaryCheck, caseSensitive);
             }
               
             if (backgroundWorker.CancellationPending)
@@ -321,7 +342,7 @@ namespace TestSearch
         {
            return str.Contains("\0\0"); //Quite simple
         }
-        private void inTextSearch(FileInfo file, DoWorkEventArgs e, string pattern, bool? binaryCheck)
+        private void inTextSearch(FileInfo file, DoWorkEventArgs e, string pattern, bool? binaryCheck, bool? caseSensitive)
         {
             using (StreamReader reader = new StreamReader(file.FullName, Encoding.Default, true, 8192))
             {
@@ -336,7 +357,9 @@ namespace TestSearch
                     int read = reader.Read(buffer, 0, 8192);
                     string contents = Regex.Escape(new string(buffer, 0, read));
                     if (binaryCheck == true && doBinaryCheck(contents) == true) break;
-                    Match m = Regex.Match(contents.ToLower(), pattern.ToLower());
+                    Match m;
+                    if (caseSensitive == false) m = Regex.Match(contents, pattern, RegexOptions.IgnoreCase);
+                    else m = Regex.Match(contents, pattern);
                     if (m.Success)
                     {
                         backgroundWorker.ReportProgress(100, file.FullName);
@@ -399,9 +422,13 @@ namespace TestSearch
             arguments.Add((bool?)inTextCheck.Checked);
             arguments.Add((bool?)binaryCheckCheck.Checked);
             arguments.Add((bool?)regRadioButton.Checked);
+            arguments.Add((bool?)folderCheck.Checked);
+            arguments.Add((bool?)caseCheck.Checked);
             while (backgroundWorker.IsBusy) { } //Wait for it
             searchButton.Enabled = false;
             stopButton.Enabled = true;
+            dirTextBox.Enabled = false;
+            templateTextBox.Enabled = false;
             f_num = 0;
             processedNum.Text = 0.ToString();
             foundNum.Text = f_num.ToString();
@@ -418,7 +445,6 @@ namespace TestSearch
         private void stopButton_Click(object sender, EventArgs e)
         {
             backgroundWorker.CancelAsync();
-            searchButton.Enabled = true;
         }
 
         private void binaryCheckCheck_CheckedChanged(object sender, EventArgs e)
@@ -506,6 +532,18 @@ namespace TestSearch
         {
             elapsedTime.Text = elapsedTimeWatch.Elapsed.ToString(@"hh\:mm\:ss\.fff");
             elapsedTime.Update();
+        }
+
+        private void folderCheck_CheckedChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.folders = folderCheck.Checked;
+            Properties.Settings.Default.Save();
+        }
+
+        private void caseCheck_CheckedChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.caseSensitive = caseCheck.Checked;
+            Properties.Settings.Default.Save();
         }
 
         

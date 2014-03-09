@@ -49,7 +49,7 @@ namespace TestSearch.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool binaryCheck {
             get {
                 return ((bool)(this["binaryCheck"]));
@@ -80,6 +80,30 @@ namespace TestSearch.Properties {
             }
             set {
                 this["wildcards"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool folders {
+            get {
+                return ((bool)(this["folders"]));
+            }
+            set {
+                this["folders"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool caseSensitive {
+            get {
+                return ((bool)(this["caseSensitive"]));
+            }
+            set {
+                this["caseSensitive"] = value;
             }
         }
     }
