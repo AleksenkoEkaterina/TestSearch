@@ -29,6 +29,9 @@ namespace TestSearch
             processingFileLabel.Text = "";
             templateTextBox.Text = Properties.Settings.Default.pattern;
             if (inTextCheck.Checked == false) binaryCheckCheck.Enabled = false;
+            wildRadioButton.Checked = Properties.Settings.Default.wildcards;
+            regRadioButton.Checked = !Properties.Settings.Default.wildcards;
+           
         
             
         }
@@ -164,11 +167,27 @@ namespace TestSearch
             string template = obj_list[1] as string;
             bool? inText=obj_list[2] as bool?;
             bool? binaryCheck = obj_list[3] as bool?;
-            
-
-            
-            TreeSearchBackground(dir, template, e, inText, binaryCheck);
+            bool? regexp = obj_list[4] as bool?;
+            TreeSearchBackground(dir, template, e, inText, binaryCheck, regexp);
             time.Reset();
+        }
+
+        private string shortenPath(string path, int maxChars)
+        {
+            if (path.Length < maxChars) return path;
+            string result;
+            string[] dirs = path.TrimEnd(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }).Split(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
+            result = dirs[dirs.Length-1];
+            int index=dirs.Length-2;
+            while(result.Length<(maxChars-dirs[0].Length)&&index>0)
+            {
+                result = dirs[index] + Path.DirectorySeparatorChar + result;
+                index--;
+            }
+            if (index == 0)
+                result = path;
+            else result = dirs[0] + Path.DirectorySeparatorChar + "..." + Path.DirectorySeparatorChar + result;
+            return result;
         }
 
         private void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -182,7 +201,7 @@ namespace TestSearch
             }
             if(state !=50)
             {
-                processingFileLabel.Text = path;
+                processingFileLabel.Text = shortenPath(path, 64);
                 processingFileLabel.Update();
             }
         }
@@ -199,7 +218,7 @@ namespace TestSearch
             Replace("\\*", ".*").
             Replace("\\?", ".") + "$";
         }
-        private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck)
+        private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck, bool? regexp)
         {
             DirectoryInfo[] subDirs = { };
            
@@ -230,49 +249,85 @@ namespace TestSearch
             }
             foreach (DirectoryInfo dir in subDirs)
             {
-                TreeSearchBackground(dir, pattern, e, inText, binaryCheck);
+                TreeSearchBackground(dir, pattern, e, inText, binaryCheck, regexp);
             }
 
+            if (regexp==false)
+            {
+                FileInfo[] matches = { };
+                try
+                {
+                    matches = directory.GetFiles(pattern);
+                }
+                catch (System.Security.SecurityException ex)
+                {
+                    Console.Error.WriteLine("Security exception:" + directory.FullName);
+                }
+                foreach (FileInfo match in matches)
+                {
 
-            FileInfo[] matches = {};
-            try
-            {
-                matches = directory.GetFiles(pattern);
-            }
-            catch(System.Security.SecurityException ex)
-            {
-                Console.Error.WriteLine("Security exception:" + directory.FullName);
-            }
-            foreach (FileInfo match in matches)
-            {
-                
-                     //Too fast search, too slow GUI
+                    //Too fast search, too slow GUI
                     //Flooded with events
                     //Won't get a faster real time search anyway
                     if (backgroundWorker.CancellationPending)
                     {
                         e.Cancel = true;
                         return;
-                    }             
-                if (time.ElapsedMilliseconds < 50)
-                {
-                    Thread.Sleep(10);
-                    time.Restart();      
+                    }
+                    if (time.ElapsedMilliseconds < 50)
+                        Thread.Sleep(10);
+
+                    backgroundWorker.ReportProgress(100, match.FullName); //Show only found files, this is too fast anyway
+                    time.Restart();
                 }
-                backgroundWorker.ReportProgress(100, match.FullName); //Show only found files, this is too fast anyway
+            }
+            else
+            {
+                FileInfo[] files = { };
+                try
+                {
+                    files = directory.GetFiles();
+                }
+                catch (System.Security.SecurityException ex)
+                {
+                    Console.Error.WriteLine("Security exception:" + directory.FullName);
+                }
+                foreach(FileInfo file in files)
+                {
+                    if (backgroundWorker.CancellationPending)
+                    {
+                        e.Cancel = true;
+                        return;
+                    }
+                    Match m = Regex.Match(file.Name, pattern);
+                    if(m.Success)
+                    {
+                        if (time.ElapsedMilliseconds < 50)
+                            Thread.Sleep(10);
+
+                        backgroundWorker.ReportProgress(100, file.FullName); //Show only found files, this is too fast anyway
+                        time.Restart();
+                    }
+                }
+            }
+            if (backgroundWorker.CancellationPending)
+            {
+                e.Cancel = true;
+                return;
             }
             if(inText==true)
             {
-                inTextSearch(directory, pattern, binaryCheck);
+                inTextSearch(directory, e, pattern, binaryCheck, regexp);
             }
         }
         private bool doBinaryCheck(string str)
         {
            return str.Contains("\0\0"); //Quite simple
         }
-        private void inTextSearch(DirectoryInfo directory, string pattern, bool? binaryCheck)
+        private void inTextSearch(DirectoryInfo directory, DoWorkEventArgs e, string pattern, bool? binaryCheck, bool? regexp)
         {
-            string regexPattern = WildcardToRegex(pattern);
+            string regexPattern = pattern;
+            if(regexp==false)regexPattern=WildcardToRegex(pattern);
             FileInfo[] files={};
             try
             {
@@ -286,16 +341,26 @@ namespace TestSearch
             foreach (FileInfo file in files)
             {
                 if(time.ElapsedMilliseconds<50)
-                {
                     Thread.Sleep(10);
-                    time.Restart();
-                }
                 backgroundWorker.ReportProgress(0, file.FullName);
-                using (StreamReader reader = new StreamReader(file.FullName))
+                if(backgroundWorker.CancellationPending)
                 {
+                    e.Cancel = true;
+                    return;
+                }
+                time.Restart();
+                using (StreamReader reader = new StreamReader(file.FullName, Encoding.UTF8, true, 8192))
+                {
+                    char[] buffer = new char[8192];
                     while (reader.EndOfStream == false)
                     {
-                        string contents = reader.ReadLine();
+                        if (backgroundWorker.CancellationPending)
+                        {
+                            e.Cancel = true;
+                            return;
+                        }
+                        int read=reader.Read(buffer, 0, 8192);
+                        string contents = Regex.Escape(new string(buffer, 0, read));
                         if (binaryCheck == true && doBinaryCheck(contents) == true) break;
                         Match m = Regex.Match(contents.ToLower(), regexPattern.ToLower());
                         if (m.Success)
@@ -312,7 +377,7 @@ namespace TestSearch
         private void startSearch()
         {
             string folderPath = Properties.Settings.Default.targetDirectory;
-            stopButton.Enabled = true;
+            
             resultView.Nodes.Clear();
             FileAttributes attr; //Let's validate our path
             try
@@ -322,11 +387,13 @@ namespace TestSearch
             catch (FileNotFoundException ex)
             {
                 Console.Error.WriteLine("File not found: " + folderPath);
+                MessageBox.Show(this, "File not found", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
             catch (DirectoryNotFoundException ex)
             {
                 Console.Error.WriteLine("Directory not found: " + folderPath);
+                MessageBox.Show(this, "Directory not found", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
             catch
@@ -334,24 +401,40 @@ namespace TestSearch
                 Console.Error.WriteLine("Internal error: " + folderPath);
                 return;
             }
+            //Let's validate pattern
+            if(regRadioButton.Checked)
+            {
+                try
+                {
+                    new Regex(templateTextBox.Text);
+                }
+                catch
+                {
+                    Console.Error.WriteLine("Regex not valid: " + templateTextBox.Text);
+                    MessageBox.Show(this, "The regular expression is not valid", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+            }
+
             bool isDirectory = ((attr & FileAttributes.Directory) == FileAttributes.Directory);
             folderPath = folderPath.TrimEnd(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
             if (!isDirectory) folderPath = folderPath.Remove(folderPath.LastIndexOf(Path.DirectorySeparatorChar) + 1);
+
             List<object> arguments = new List<object>();
             arguments.Add(new DirectoryInfo(folderPath));
             arguments.Add(templateTextBox.Text);
             arguments.Add((bool?)inTextCheck.Checked);
             arguments.Add((bool?)binaryCheckCheck.Checked);
+            arguments.Add((bool?)regRadioButton.Checked);
             while (backgroundWorker.IsBusy) { } //Wait for it
             searchButton.Enabled = false;
+            stopButton.Enabled = true;
             backgroundWorker.RunWorkerAsync(arguments);
         }
 
         private void searchButton_Click(object sender, EventArgs e)
         {
             startSearch();
-            
-         
         }
 
         private void stopButton_Click(object sender, EventArgs e)
@@ -421,6 +504,24 @@ namespace TestSearch
 
                 }
             }
+        }
+
+        private void dirTextBox_TextChanged(object sender, EventArgs e)
+        {
+            if (dirTextBox.Text != "") searchButton.Enabled = true;
+            else searchButton.Enabled = false;
+        }
+
+        private void templateTextBox_TextChanged(object sender, EventArgs e)
+        {
+            if (templateTextBox.Text != "") searchButton.Enabled = true;
+            else searchButton.Enabled = false;
+        }
+
+        private void wildRadioButton_CheckedChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.wildcards = wildRadioButton.Checked;
+            Properties.Settings.Default.Save();
         }
 
         
