@@ -28,6 +28,7 @@ namespace TestSearch
             dirTextBox.Text=Properties.Settings.Default.targetDirectory;
             processingFileLabel.Text = "";
             templateTextBox.Text = Properties.Settings.Default.pattern;
+            if (inTextCheck.Checked == false) binaryCheckCheck.Enabled = false;
         
             
         }
@@ -177,6 +178,10 @@ namespace TestSearch
             {*/
             int state = e.ProgressPercentage;
             string path = e.UserState as string;
+            if (path == @"H:\Downloads\True_Patch_Gold_FINAL_with_Hotfix7\True_Patch_Gold_FINAL_with_Hotfix7\Extras\Optional ")
+            {
+                int i = 0;
+            }
             if (state > 0)
             {
                 addToTree(path);
@@ -184,7 +189,7 @@ namespace TestSearch
             }
             if(state !=50)
             {
-                processingFileLabel.Text = path as string;
+                processingFileLabel.Text = path;
                 processingFileLabel.Update();
             }
            
@@ -207,6 +212,7 @@ namespace TestSearch
         private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck)
         {
             DirectoryInfo[] subDirs = { };
+           
             try
             {
                 subDirs = directory.GetDirectories();
@@ -253,7 +259,6 @@ namespace TestSearch
                      //Too fast search, too slow GUI
                     //Flooded with events
                     //Won't get a faster search anyway
-                    //Will fix it for calculators =)
                     if (backgroundWorker.CancellationPending)
                     {
                         e.Cancel = true;
@@ -355,7 +360,6 @@ namespace TestSearch
         private void searchButton_Click(object sender, EventArgs e)
         {
             startSearch();
-            //start with validating path
             
          
         }
@@ -376,6 +380,8 @@ namespace TestSearch
         {
             Properties.Settings.Default.inText= inTextCheck.Checked;
             Properties.Settings.Default.Save();
+            if (inTextCheck.Checked) binaryCheckCheck.Enabled = true;
+            else binaryCheckCheck.Enabled = false;
         }
 
         private void templateTextBox_Leave(object sender, EventArgs e)
@@ -392,6 +398,47 @@ namespace TestSearch
                 Properties.Settings.Default.Save();
                 startSearch();
             }
+        }
+
+        private void resultView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            if(e.Node.Tag is FileInfo)
+            {
+                FileInfo info = e.Node.Tag as FileInfo;
+                Process.Start(info.DirectoryName);
+            }
+            else
+            {
+                DirectoryInfo dinfo=e.Node.Tag as DirectoryInfo;
+                Process.Start(dinfo.FullName);
+                e.Node.Expand();
+            }
+        }
+
+        private void browseButton_Click(object sender, EventArgs e)
+        {
+            using(FolderBrowserDialog fbd = new FolderBrowserDialog())
+            {
+                fbd.RootFolder = Environment.SpecialFolder.Desktop;
+                fbd.SelectedPath = Properties.Settings.Default.targetDirectory;
+                fbd.Description = "Select target directory:";
+                fbd.ShowNewFolderButton = false;
+                if(fbd.ShowDialog() == DialogResult.OK)
+                {
+                    dirTextBox.Text = fbd.SelectedPath;
+                    Properties.Settings.Default.targetDirectory = dirTextBox.Text;
+                    Properties.Settings.Default.Save();
+
+                }
+            }
+       /*     OpenFileDialog ofl = new OpenFileDialog();
+            ofl.InitialDirectory = Properties.Settings.Default.targetDirectory;
+            if(ofl.ShowDialog()==DialogResult.OK)
+            {
+                dirTextBox.Text = ofl.FileName;
+                Properties.Settings.Default.targetDirectory = dirTextBox.Text;
+                Properties.Settings.Default.Save();
+            }*/
         }
 
         
