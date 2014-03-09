@@ -17,7 +17,7 @@ namespace TestSearch
     public partial class SearchForm : Form
     {
         Stopwatch elapsedTimeWatch = new Stopwatch();
-        private int p_num;
+        
         private int f_num;
         public SearchForm()  
         {
@@ -29,7 +29,7 @@ namespace TestSearch
             dirTextBox.Text = Properties.Settings.Default.targetDirectory;
             processingFileLabel.Text = "";
             elapsedTime.Text = new TimeSpan(0, 0, 0, 0, 0).ToString(@"hh\:mm\:ss\.fff");
-            p_num = 0;
+         //   p_num = 0;
             f_num = 0;
             processedNum.Text = 0.ToString();
             foundNum.Text = 0.ToString();
@@ -160,6 +160,7 @@ namespace TestSearch
         }
 
         private Stopwatch time = new Stopwatch();
+        private int p_num;
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             List<object> obj_list = e.Argument as List<object>;
@@ -170,7 +171,9 @@ namespace TestSearch
             bool? binaryCheck = obj_list[3] as bool?;
             bool? regexp = obj_list[4] as bool?;
             if (regexp == false) template = WildcardToRegex(template);
+            p_num = 0;
             TreeSearchBackground(dir, template, e, inText, binaryCheck);
+            backgroundWorker.ReportProgress(50, (int?)p_num);
             time.Reset();
         }
 
@@ -195,9 +198,10 @@ namespace TestSearch
         private void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             int state = e.ProgressPercentage;
-            string path = e.UserState as string;
+            string path;
             if (state == 100)
             {
+                path = e.UserState as string;
                 if (addToTree(path)) //Can be duplicate
                 {
                     f_num++;
@@ -206,12 +210,20 @@ namespace TestSearch
                     foundNum.Update();
                 }
             }
+            else if(state == 0)
+            {
+                object[] ar = e.UserState as object[];
+                path = ar[0] as string;
+                int? num = ar[1] as int?;
+                processingFileLabel.Text = shortenPath(path, 64);
+                processedNum.Text = num.ToString();
+                processingFileLabel.Update();
+                processedNum.Update();
+            }
             else
             {
-                processingFileLabel.Text = shortenPath(path, 64);
-                p_num++;
-                processedNum.Text = p_num.ToString();
-                processingFileLabel.Update();
+                int? num = e.UserState as int?;
+                processedNum.Text = num.ToString();
                 processedNum.Update();
             }
         }
@@ -282,9 +294,11 @@ namespace TestSearch
             }
             foreach (FileInfo file in files)
             {
+                p_num++;
                 if (time.ElapsedMilliseconds > 2)
                 {
-                    backgroundWorker.ReportProgress(0, file.FullName); //We'll lose some filenames here...
+                    object[] ar = new object[] {file.FullName, (int?)p_num};
+                    backgroundWorker.ReportProgress(0, ar); //We'll lose some filenames here...
                     //...but no one can read this fast anyway
                     time.Restart();
                 }
