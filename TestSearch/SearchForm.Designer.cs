@@ -41,20 +41,29 @@
             this.dirLabel = new System.Windows.Forms.Label();
             this.resultView = new System.Windows.Forms.TreeView();
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
-            this.processingLabel = new System.Windows.Forms.Label();
             this.processingFileLabel = new System.Windows.Forms.Label();
+            this.processingLabel = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
             this.inTextCheck = new System.Windows.Forms.CheckBox();
             this.binaryCheckCheck = new System.Windows.Forms.CheckBox();
-            this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.wildRadioButton = new System.Windows.Forms.RadioButton();
             this.regRadioButton = new System.Windows.Forms.RadioButton();
+            this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
+            this.timeLabel = new System.Windows.Forms.Label();
+            this.elapsedTime = new System.Windows.Forms.Label();
+            this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
+            this.elapsedTimeTimer = new System.Windows.Forms.Timer(this.components);
+            this.processedLabel = new System.Windows.Forms.Label();
+            this.processedNum = new System.Windows.Forms.Label();
+            this.foundLabel = new System.Windows.Forms.Label();
+            this.foundNum = new System.Windows.Forms.Label();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.tableLayoutPanel4.SuspendLayout();
+            this.tableLayoutPanel5.SuspendLayout();
             this.SuspendLayout();
             // 
             // dirTextBox
@@ -63,7 +72,7 @@
             this.dirTextBox.Location = new System.Drawing.Point(125, 3);
             this.dirTextBox.MinimumSize = new System.Drawing.Size(70, 4);
             this.dirTextBox.Name = "dirTextBox";
-            this.dirTextBox.Size = new System.Drawing.Size(103, 22);
+            this.dirTextBox.Size = new System.Drawing.Size(272, 22);
             this.dirTextBox.TabIndex = 0;
             this.dirTextBox.TextChanged += new System.EventHandler(this.dirTextBox_TextChanged);
             this.dirTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.dirTextBox_KeyUp);
@@ -80,17 +89,19 @@
             this.tableLayoutPanel1.ColumnCount = 1;
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel2, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.resultView, 0, 3);
+            this.tableLayoutPanel1.Controls.Add(this.resultView, 0, 4);
             this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel3, 0, 2);
             this.tableLayoutPanel1.Controls.Add(this.groupBox1, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel5, 0, 3);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 4;
+            this.tableLayoutPanel1.RowCount = 5;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 87F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 45F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 90F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel1.Size = new System.Drawing.Size(569, 510);
             this.tableLayoutPanel1.TabIndex = 3;
@@ -125,7 +136,7 @@
             this.templateTextBox.Location = new System.Drawing.Point(125, 36);
             this.templateTextBox.MinimumSize = new System.Drawing.Size(70, 4);
             this.templateTextBox.Name = "templateTextBox";
-            this.templateTextBox.Size = new System.Drawing.Size(103, 22);
+            this.templateTextBox.Size = new System.Drawing.Size(272, 22);
             this.templateTextBox.TabIndex = 5;
             this.templateTextBox.TextChanged += new System.EventHandler(this.templateTextBox_TextChanged);
             this.templateTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.templateTextBox_KeyUp);
@@ -136,7 +147,7 @@
             this.searchButton.AutoSize = true;
             this.searchButton.Dock = System.Windows.Forms.DockStyle.Fill;
             this.searchButton.Enabled = false;
-            this.searchButton.Location = new System.Drawing.Point(234, 36);
+            this.searchButton.Location = new System.Drawing.Point(403, 36);
             this.searchButton.Name = "searchButton";
             this.searchButton.Size = new System.Drawing.Size(76, 27);
             this.searchButton.TabIndex = 3;
@@ -149,7 +160,7 @@
             this.stopButton.AutoSize = true;
             this.stopButton.Dock = System.Windows.Forms.DockStyle.Fill;
             this.stopButton.Enabled = false;
-            this.stopButton.Location = new System.Drawing.Point(316, 36);
+            this.stopButton.Location = new System.Drawing.Point(485, 36);
             this.stopButton.Name = "stopButton";
             this.stopButton.Size = new System.Drawing.Size(75, 27);
             this.stopButton.TabIndex = 4;
@@ -161,7 +172,7 @@
             // 
             this.browseButton.AutoSize = true;
             this.browseButton.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.browseButton.Location = new System.Drawing.Point(234, 3);
+            this.browseButton.Location = new System.Drawing.Point(403, 3);
             this.browseButton.Name = "browseButton";
             this.browseButton.Size = new System.Drawing.Size(76, 27);
             this.browseButton.TabIndex = 7;
@@ -195,10 +206,10 @@
             this.resultView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.resultView.ImageIndex = 0;
             this.resultView.ImageList = this.iconList;
-            this.resultView.Location = new System.Drawing.Point(3, 207);
+            this.resultView.Location = new System.Drawing.Point(3, 297);
             this.resultView.Name = "resultView";
             this.resultView.SelectedImageIndex = 0;
-            this.resultView.Size = new System.Drawing.Size(563, 300);
+            this.resultView.Size = new System.Drawing.Size(563, 210);
             this.resultView.TabIndex = 1;
             this.resultView.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.resultView_NodeMouseDoubleClick);
             // 
@@ -208,8 +219,8 @@
             this.tableLayoutPanel3.ColumnCount = 2;
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel3.Controls.Add(this.processingLabel, 0, 0);
             this.tableLayoutPanel3.Controls.Add(this.processingFileLabel, 1, 0);
+            this.tableLayoutPanel3.Controls.Add(this.processingLabel, 0, 0);
             this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel3.Location = new System.Drawing.Point(3, 162);
             this.tableLayoutPanel3.Name = "tableLayoutPanel3";
@@ -218,28 +229,27 @@
             this.tableLayoutPanel3.Size = new System.Drawing.Size(563, 39);
             this.tableLayoutPanel3.TabIndex = 2;
             // 
-            // processingLabel
-            // 
-            this.processingLabel.AutoSize = true;
-            this.processingLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.processingLabel.Location = new System.Drawing.Point(3, 0);
-            this.processingLabel.Name = "processingLabel";
-            this.processingLabel.Size = new System.Drawing.Size(94, 39);
-            this.processingLabel.TabIndex = 2;
-            this.processingLabel.Text = "Processing:";
-            this.processingLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
             // processingFileLabel
             // 
-            this.processingFileLabel.AutoSize = true;
-            this.processingFileLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.processingFileLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.processingFileLabel.Location = new System.Drawing.Point(103, 0);
             this.processingFileLabel.MinimumSize = new System.Drawing.Size(0, 38);
             this.processingFileLabel.Name = "processingFileLabel";
             this.processingFileLabel.Size = new System.Drawing.Size(457, 39);
             this.processingFileLabel.TabIndex = 3;
             this.processingFileLabel.Text = "filename";
-            this.processingFileLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // processingLabel
+            // 
+            this.processingLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.processingLabel.Location = new System.Drawing.Point(3, 0);
+            this.processingLabel.Name = "processingLabel";
+            this.processingLabel.Size = new System.Drawing.Size(94, 39);
+            this.processingLabel.TabIndex = 2;
+            this.processingLabel.Text = "Processing:";
+            this.processingLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // groupBox1
             // 
@@ -292,14 +302,6 @@
             this.binaryCheckCheck.UseVisualStyleBackColor = true;
             this.binaryCheckCheck.CheckedChanged += new System.EventHandler(this.binaryCheckCheck_CheckedChanged);
             // 
-            // backgroundWorker
-            // 
-            this.backgroundWorker.WorkerReportsProgress = true;
-            this.backgroundWorker.WorkerSupportsCancellation = true;
-            this.backgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_DoWork);
-            this.backgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker_ProgressChanged);
-            this.backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_RunWorkerCompleted);
-            // 
             // wildRadioButton
             // 
             this.wildRadioButton.AutoSize = true;
@@ -320,9 +322,108 @@
             this.regRadioButton.Name = "regRadioButton";
             this.regRadioButton.Size = new System.Drawing.Size(77, 21);
             this.regRadioButton.TabIndex = 3;
-            this.regRadioButton.TabStop = true;
             this.regRadioButton.Text = "Regexp";
             this.regRadioButton.UseVisualStyleBackColor = true;
+            // 
+            // tableLayoutPanel5
+            // 
+            this.tableLayoutPanel5.ColumnCount = 2;
+            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel5.Controls.Add(this.foundNum, 1, 2);
+            this.tableLayoutPanel5.Controls.Add(this.foundLabel, 0, 2);
+            this.tableLayoutPanel5.Controls.Add(this.processedNum, 1, 1);
+            this.tableLayoutPanel5.Controls.Add(this.processedLabel, 0, 1);
+            this.tableLayoutPanel5.Controls.Add(this.timeLabel, 0, 0);
+            this.tableLayoutPanel5.Controls.Add(this.elapsedTime, 1, 0);
+            this.tableLayoutPanel5.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel5.Location = new System.Drawing.Point(3, 207);
+            this.tableLayoutPanel5.Name = "tableLayoutPanel5";
+            this.tableLayoutPanel5.RowCount = 3;
+            this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33334F));
+            this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33334F));
+            this.tableLayoutPanel5.Size = new System.Drawing.Size(563, 84);
+            this.tableLayoutPanel5.TabIndex = 4;
+            // 
+            // timeLabel
+            // 
+            this.timeLabel.AutoSize = true;
+            this.timeLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.timeLabel.Location = new System.Drawing.Point(3, 0);
+            this.timeLabel.Name = "timeLabel";
+            this.timeLabel.Size = new System.Drawing.Size(94, 27);
+            this.timeLabel.TabIndex = 0;
+            this.timeLabel.Text = "Elapsed time:";
+            this.timeLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // elapsedTime
+            // 
+            this.elapsedTime.AutoSize = true;
+            this.elapsedTime.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.elapsedTime.Location = new System.Drawing.Point(103, 0);
+            this.elapsedTime.Name = "elapsedTime";
+            this.elapsedTime.Size = new System.Drawing.Size(457, 27);
+            this.elapsedTime.TabIndex = 1;
+            this.elapsedTime.Text = "time";
+            this.elapsedTime.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // backgroundWorker
+            // 
+            this.backgroundWorker.WorkerReportsProgress = true;
+            this.backgroundWorker.WorkerSupportsCancellation = true;
+            this.backgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_DoWork);
+            this.backgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker_ProgressChanged);
+            this.backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_RunWorkerCompleted);
+            // 
+            // elapsedTimeTimer
+            // 
+            this.elapsedTimeTimer.Interval = 200;
+            this.elapsedTimeTimer.Tick += new System.EventHandler(this.elapsedTimeTimer_Tick);
+            // 
+            // processedLabel
+            // 
+            this.processedLabel.AutoSize = true;
+            this.processedLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.processedLabel.Location = new System.Drawing.Point(3, 27);
+            this.processedLabel.Name = "processedLabel";
+            this.processedLabel.Size = new System.Drawing.Size(94, 28);
+            this.processedLabel.TabIndex = 0;
+            this.processedLabel.Text = "Processed:";
+            this.processedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // processedNum
+            // 
+            this.processedNum.AutoSize = true;
+            this.processedNum.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.processedNum.Location = new System.Drawing.Point(103, 27);
+            this.processedNum.Name = "processedNum";
+            this.processedNum.Size = new System.Drawing.Size(457, 28);
+            this.processedNum.TabIndex = 1;
+            this.processedNum.Text = "num";
+            this.processedNum.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // foundLabel
+            // 
+            this.foundLabel.AutoSize = true;
+            this.foundLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.foundLabel.Location = new System.Drawing.Point(3, 55);
+            this.foundLabel.Name = "foundLabel";
+            this.foundLabel.Size = new System.Drawing.Size(94, 29);
+            this.foundLabel.TabIndex = 2;
+            this.foundLabel.Text = "Found:";
+            this.foundLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // foundNum
+            // 
+            this.foundNum.AutoSize = true;
+            this.foundNum.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.foundNum.Location = new System.Drawing.Point(103, 55);
+            this.foundNum.Name = "foundNum";
+            this.foundNum.Size = new System.Drawing.Size(457, 29);
+            this.foundNum.TabIndex = 3;
+            this.foundNum.Text = "num";
+            this.foundNum.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // SearchForm
             // 
@@ -338,10 +439,11 @@
             this.tableLayoutPanel2.ResumeLayout(false);
             this.tableLayoutPanel2.PerformLayout();
             this.tableLayoutPanel3.ResumeLayout(false);
-            this.tableLayoutPanel3.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.tableLayoutPanel4.ResumeLayout(false);
             this.tableLayoutPanel4.PerformLayout();
+            this.tableLayoutPanel5.ResumeLayout(false);
+            this.tableLayoutPanel5.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -369,6 +471,14 @@
         private System.Windows.Forms.Label dirLabel;
         private System.Windows.Forms.RadioButton wildRadioButton;
         private System.Windows.Forms.RadioButton regRadioButton;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel5;
+        private System.Windows.Forms.Label timeLabel;
+        private System.Windows.Forms.Label elapsedTime;
+        private System.Windows.Forms.Timer elapsedTimeTimer;
+        private System.Windows.Forms.Label processedLabel;
+        private System.Windows.Forms.Label processedNum;
+        private System.Windows.Forms.Label foundLabel;
+        private System.Windows.Forms.Label foundNum;
     }
 }
 

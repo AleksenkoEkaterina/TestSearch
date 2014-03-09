@@ -16,24 +16,27 @@ namespace TestSearch
 {
     public partial class SearchForm : Form
     {
-     
-       public SearchForm()
+        Stopwatch elapsedTimeWatch = new Stopwatch();
+        private int p_num;
+        private int f_num;
+        public SearchForm()  
         {
-
             InitializeComponent();
             binaryCheckCheck.Checked = Properties.Settings.Default.binaryCheck;
             inTextCheck.Checked = Properties.Settings.Default.inText;
             iconList.Images.Add("folder", new Bitmap(Properties.Resources.folder_open.ToBitmap()));
             iconList.Images.Add("document", new Bitmap(Properties.Resources.Generic_Document.ToBitmap()));
-            dirTextBox.Text=Properties.Settings.Default.targetDirectory;
+            dirTextBox.Text = Properties.Settings.Default.targetDirectory;
             processingFileLabel.Text = "";
+            elapsedTime.Text = new TimeSpan(0, 0, 0, 0, 0).ToString(@"hh\:mm\:ss\.fff");
+            p_num = 0;
+            f_num = 0;
+            processedNum.Text = 0.ToString();
+            foundNum.Text = 0.ToString();
             templateTextBox.Text = Properties.Settings.Default.pattern;
             if (inTextCheck.Checked == false) binaryCheckCheck.Enabled = false;
             wildRadioButton.Checked = Properties.Settings.Default.wildcards;
             regRadioButton.Checked = !Properties.Settings.Default.wildcards;
-           
-        
-            
         }
 
         private void dirTextBox_Leave(object sender, EventArgs e)
@@ -156,8 +159,6 @@ namespace TestSearch
             
         }
 
-     //   private List<string> addToTreeBuffer = new List<string>();
-
         private Stopwatch time = new Stopwatch();
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -168,7 +169,8 @@ namespace TestSearch
             bool? inText=obj_list[2] as bool?;
             bool? binaryCheck = obj_list[3] as bool?;
             bool? regexp = obj_list[4] as bool?;
-            TreeSearchBackground(dir, template, e, inText, binaryCheck, regexp);
+            if (regexp == false) template = WildcardToRegex(template);
+            TreeSearchBackground(dir, template, e, inText, binaryCheck);
             time.Reset();
         }
 
@@ -194,21 +196,31 @@ namespace TestSearch
         {
             int state = e.ProgressPercentage;
             string path = e.UserState as string;
-            if (state > 0)
+            if (state == 100)
             {
-                addToTree(path);
-                resultView.Update();
+                if (addToTree(path)) //Can be duplicate
+                {
+                    f_num++;
+                    foundNum.Text = f_num.ToString();
+                    resultView.Update();
+                    foundNum.Update();
+                }
             }
-            if(state !=50)
+            else
             {
                 processingFileLabel.Text = shortenPath(path, 64);
+                p_num++;
+                processedNum.Text = p_num.ToString();
                 processingFileLabel.Update();
+                processedNum.Update();
             }
         }
 
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             searchButton.Enabled = true;
+            elapsedTimeWatch.Reset();
+            elapsedTimeTimer.Stop();
         }
 
 
@@ -218,10 +230,9 @@ namespace TestSearch
             Replace("\\*", ".*").
             Replace("\\?", ".") + "$";
         }
-        private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck, bool? regexp)
+        private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck)
         {
-            DirectoryInfo[] subDirs = { };
-           
+            DirectoryInfo[] subDirs = { };      
             try
             {
                 subDirs = directory.GetDirectories();
@@ -249,86 +260,10 @@ namespace TestSearch
             }
             foreach (DirectoryInfo dir in subDirs)
             {
-                TreeSearchBackground(dir, pattern, e, inText, binaryCheck, regexp);
+                TreeSearchBackground(dir, pattern, e, inText, binaryCheck);
             }
 
-            if (regexp==false)
-            {
-                FileInfo[] matches = { };
-                try
-                {
-                    matches = directory.GetFiles(pattern);
-                }
-                catch (System.Security.SecurityException ex)
-                {
-                    Console.Error.WriteLine("Security exception:" + directory.FullName);
-                }
-                foreach (FileInfo match in matches)
-                {
-
-                    //Too fast search, too slow GUI
-                    //Flooded with events
-                    //Won't get a faster real time search anyway
-                    if (backgroundWorker.CancellationPending)
-                    {
-                        e.Cancel = true;
-                        return;
-                    }
-                    if (time.ElapsedMilliseconds < 50)
-                        Thread.Sleep(10);
-
-                    backgroundWorker.ReportProgress(100, match.FullName); //Show only found files, this is too fast anyway
-                    time.Restart();
-                }
-            }
-            else
-            {
-                FileInfo[] files = { };
-                try
-                {
-                    files = directory.GetFiles();
-                }
-                catch (System.Security.SecurityException ex)
-                {
-                    Console.Error.WriteLine("Security exception:" + directory.FullName);
-                }
-                foreach(FileInfo file in files)
-                {
-                    if (backgroundWorker.CancellationPending)
-                    {
-                        e.Cancel = true;
-                        return;
-                    }
-                    Match m = Regex.Match(file.Name, pattern);
-                    if(m.Success)
-                    {
-                        if (time.ElapsedMilliseconds < 50)
-                            Thread.Sleep(10);
-
-                        backgroundWorker.ReportProgress(100, file.FullName); //Show only found files, this is too fast anyway
-                        time.Restart();
-                    }
-                }
-            }
-            if (backgroundWorker.CancellationPending)
-            {
-                e.Cancel = true;
-                return;
-            }
-            if(inText==true)
-            {
-                inTextSearch(directory, e, pattern, binaryCheck, regexp);
-            }
-        }
-        private bool doBinaryCheck(string str)
-        {
-           return str.Contains("\0\0"); //Quite simple
-        }
-        private void inTextSearch(DirectoryInfo directory, DoWorkEventArgs e, string pattern, bool? binaryCheck, bool? regexp)
-        {
-            string regexPattern = pattern;
-            if(regexp==false)regexPattern=WildcardToRegex(pattern);
-            FileInfo[] files={};
+            FileInfo[] files = { };
             try
             {
                 files = directory.GetFiles();
@@ -337,41 +272,66 @@ namespace TestSearch
             {
                 Console.Error.WriteLine("Security exception:" + directory.FullName);
             }
-
             foreach (FileInfo file in files)
             {
-                if(time.ElapsedMilliseconds<50)
-                    Thread.Sleep(10);
+                if (time.ElapsedMilliseconds < 2)
+                    Thread.Sleep(1); //Sometimes slightly unresponsive... but fast.
+                //Maybe I should just NOT send progress?
                 backgroundWorker.ReportProgress(0, file.FullName);
-                if(backgroundWorker.CancellationPending)
+                time.Restart();
+
+                if (backgroundWorker.CancellationPending)
                 {
                     e.Cancel = true;
                     return;
                 }
-                time.Restart();
-                using (StreamReader reader = new StreamReader(file.FullName, Encoding.UTF8, true, 8192))
+                Match m = Regex.Match(file.Name, pattern);
+                if (m.Success)
                 {
-                    char[] buffer = new char[8192];
-                    while (reader.EndOfStream == false)
+                    if (time.ElapsedMilliseconds < 2)
+                        Thread.Sleep(1);
+
+                    backgroundWorker.ReportProgress(100, file.FullName); //Show only found files, this is too fast anyway
+                    time.Restart();
+                }
+                inTextSearch(file, e, pattern, binaryCheck);
+            }
+              
+            if (backgroundWorker.CancellationPending)
+            {
+                e.Cancel = true;
+                return;
+            }
+        }
+        private bool doBinaryCheck(string str)
+        {
+           return str.Contains("\0\0"); //Quite simple
+        }
+        private void inTextSearch(FileInfo file, DoWorkEventArgs e, string pattern, bool? binaryCheck)
+        {
+            using (StreamReader reader = new StreamReader(file.FullName, Encoding.UTF8, true, 8192))
+            {
+                char[] buffer = new char[8192];
+                while (reader.EndOfStream == false)
+                {
+                    if (backgroundWorker.CancellationPending)
                     {
-                        if (backgroundWorker.CancellationPending)
-                        {
-                            e.Cancel = true;
-                            return;
-                        }
-                        int read=reader.Read(buffer, 0, 8192);
-                        string contents = Regex.Escape(new string(buffer, 0, read));
-                        if (binaryCheck == true && doBinaryCheck(contents) == true) break;
-                        Match m = Regex.Match(contents.ToLower(), regexPattern.ToLower());
-                        if (m.Success)
-                        {
-                            backgroundWorker.ReportProgress(50, file.FullName);
-                            break;
-                        }
+                        e.Cancel = true;
+                        return;
+                    }
+                    int read = reader.Read(buffer, 0, 8192);
+                    string contents = Regex.Escape(new string(buffer, 0, read));
+                    if (binaryCheck == true && doBinaryCheck(contents) == true) break;
+                    Match m = Regex.Match(contents.ToLower(), pattern.ToLower());
+                    if (m.Success)
+                    {
+                        if (time.ElapsedMilliseconds < 5) Thread.Sleep(1);
+                        backgroundWorker.ReportProgress(100, file.FullName);
+                        time.Restart();
+                        break;
                     }
                 }
             }
-
         }
 
         private void startSearch()
@@ -429,6 +389,12 @@ namespace TestSearch
             while (backgroundWorker.IsBusy) { } //Wait for it
             searchButton.Enabled = false;
             stopButton.Enabled = true;
+            p_num = 0;
+            f_num = 0;
+            processedNum.Text = p_num.ToString();
+            foundNum.Text = f_num.ToString();
+            elapsedTimeWatch.Start();
+            elapsedTimeTimer.Start();
             backgroundWorker.RunWorkerAsync(arguments);
         }
 
@@ -522,6 +488,12 @@ namespace TestSearch
         {
             Properties.Settings.Default.wildcards = wildRadioButton.Checked;
             Properties.Settings.Default.Save();
+        }
+
+        private void elapsedTimeTimer_Tick(object sender, EventArgs e)
+        {
+            elapsedTime.Text = elapsedTimeWatch.Elapsed.ToString(@"hh\:mm\:ss\.fff");
+            elapsedTime.Update();
         }
 
         
