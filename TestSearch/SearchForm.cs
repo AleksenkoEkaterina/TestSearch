@@ -161,10 +161,10 @@ namespace TestSearch
 
         private Stopwatch time = new Stopwatch();
         private int p_num;
+        string last_name;
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             List<object> obj_list = e.Argument as List<object>;
-            time.Start();
             DirectoryInfo dir = obj_list[0] as DirectoryInfo;
             string template = obj_list[1] as string;
             bool? inText=obj_list[2] as bool?;
@@ -172,8 +172,9 @@ namespace TestSearch
             bool? regexp = obj_list[4] as bool?;
             if (regexp == false) template = WildcardToRegex(template);
             p_num = 0;
+            time.Start();
             TreeSearchBackground(dir, template, e, inText, binaryCheck);
-            backgroundWorker.ReportProgress(50, (int?)p_num);
+            backgroundWorker.ReportProgress(0, new object[]{last_name, (int?)p_num});
             time.Reset();
         }
 
@@ -220,12 +221,6 @@ namespace TestSearch
                 processingFileLabel.Update();
                 processedNum.Update();
             }
-            else
-            {
-                int? num = e.UserState as int?;
-                processedNum.Text = num.ToString();
-                processedNum.Update();
-            }
         }
 
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -238,9 +233,7 @@ namespace TestSearch
 
         public static string WildcardToRegex(string pattern)
         {
-            return "^" + Regex.Escape(pattern).
-            Replace("\\*", ".*").
-            Replace("\\?", ".") + "$";
+            return "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
         }
         private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck)
         {
@@ -292,16 +285,18 @@ namespace TestSearch
             {
                 Console.Error.WriteLine("Internal error:" + directory.FullName);
             }
+
             foreach (FileInfo file in files)
             {
                 p_num++;
                 if (time.ElapsedMilliseconds > 2)
                 {
-                    object[] ar = new object[] {file.FullName, (int?)p_num};
+                    object[] ar = new object[] { file.FullName, (int?)p_num };
                     backgroundWorker.ReportProgress(0, ar); //We'll lose some filenames here...
                     //...but no one can read this fast anyway
                     time.Restart();
                 }
+                else last_name = file.FullName; //For the last report
                 if (backgroundWorker.CancellationPending)
                 {
                     e.Cancel = true;
@@ -328,7 +323,7 @@ namespace TestSearch
         }
         private void inTextSearch(FileInfo file, DoWorkEventArgs e, string pattern, bool? binaryCheck)
         {
-            using (StreamReader reader = new StreamReader(file.FullName, Encoding.UTF8, true, 8192))
+            using (StreamReader reader = new StreamReader(file.FullName, Encoding.Default, true, 8192))
             {
                 char[] buffer = new char[8192];
                 while (reader.EndOfStream == false)
@@ -407,9 +402,8 @@ namespace TestSearch
             while (backgroundWorker.IsBusy) { } //Wait for it
             searchButton.Enabled = false;
             stopButton.Enabled = true;
-            p_num = 0;
             f_num = 0;
-            processedNum.Text = p_num.ToString();
+            processedNum.Text = 0.ToString();
             foundNum.Text = f_num.ToString();
             elapsedTimeWatch.Start();
             elapsedTimeTimer.Start();

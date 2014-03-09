@@ -50,14 +50,14 @@
             this.wildRadioButton = new System.Windows.Forms.RadioButton();
             this.regRadioButton = new System.Windows.Forms.RadioButton();
             this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
+            this.foundNum = new System.Windows.Forms.Label();
+            this.foundLabel = new System.Windows.Forms.Label();
+            this.processedNum = new System.Windows.Forms.Label();
+            this.processedLabel = new System.Windows.Forms.Label();
             this.timeLabel = new System.Windows.Forms.Label();
             this.elapsedTime = new System.Windows.Forms.Label();
             this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.elapsedTimeTimer = new System.Windows.Forms.Timer(this.components);
-            this.processedLabel = new System.Windows.Forms.Label();
-            this.processedNum = new System.Windows.Forms.Label();
-            this.foundLabel = new System.Windows.Forms.Label();
-            this.foundNum = new System.Windows.Forms.Label();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
@@ -346,6 +346,50 @@
             this.tableLayoutPanel5.Size = new System.Drawing.Size(563, 84);
             this.tableLayoutPanel5.TabIndex = 4;
             // 
+            // foundNum
+            // 
+            this.foundNum.AutoSize = true;
+            this.foundNum.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.foundNum.Location = new System.Drawing.Point(103, 55);
+            this.foundNum.Name = "foundNum";
+            this.foundNum.Size = new System.Drawing.Size(457, 29);
+            this.foundNum.TabIndex = 3;
+            this.foundNum.Text = "num";
+            this.foundNum.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // foundLabel
+            // 
+            this.foundLabel.AutoSize = true;
+            this.foundLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.foundLabel.Location = new System.Drawing.Point(3, 55);
+            this.foundLabel.Name = "foundLabel";
+            this.foundLabel.Size = new System.Drawing.Size(94, 29);
+            this.foundLabel.TabIndex = 2;
+            this.foundLabel.Text = "Found:";
+            this.foundLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // processedNum
+            // 
+            this.processedNum.AutoSize = true;
+            this.processedNum.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.processedNum.Location = new System.Drawing.Point(103, 27);
+            this.processedNum.Name = "processedNum";
+            this.processedNum.Size = new System.Drawing.Size(457, 28);
+            this.processedNum.TabIndex = 1;
+            this.processedNum.Text = "num";
+            this.processedNum.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // processedLabel
+            // 
+            this.processedLabel.AutoSize = true;
+            this.processedLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.processedLabel.Location = new System.Drawing.Point(3, 27);
+            this.processedLabel.Name = "processedLabel";
+            this.processedLabel.Size = new System.Drawing.Size(94, 28);
+            this.processedLabel.TabIndex = 0;
+            this.processedLabel.Text = "Processed:";
+            this.processedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
             // timeLabel
             // 
             this.timeLabel.AutoSize = true;
@@ -380,50 +424,6 @@
             // 
             this.elapsedTimeTimer.Interval = 200;
             this.elapsedTimeTimer.Tick += new System.EventHandler(this.elapsedTimeTimer_Tick);
-            // 
-            // processedLabel
-            // 
-            this.processedLabel.AutoSize = true;
-            this.processedLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.processedLabel.Location = new System.Drawing.Point(3, 27);
-            this.processedLabel.Name = "processedLabel";
-            this.processedLabel.Size = new System.Drawing.Size(94, 28);
-            this.processedLabel.TabIndex = 0;
-            this.processedLabel.Text = "Processed:";
-            this.processedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // processedNum
-            // 
-            this.processedNum.AutoSize = true;
-            this.processedNum.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.processedNum.Location = new System.Drawing.Point(103, 27);
-            this.processedNum.Name = "processedNum";
-            this.processedNum.Size = new System.Drawing.Size(457, 28);
-            this.processedNum.TabIndex = 1;
-            this.processedNum.Text = "num";
-            this.processedNum.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // foundLabel
-            // 
-            this.foundLabel.AutoSize = true;
-            this.foundLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.foundLabel.Location = new System.Drawing.Point(3, 55);
-            this.foundLabel.Name = "foundLabel";
-            this.foundLabel.Size = new System.Drawing.Size(94, 29);
-            this.foundLabel.TabIndex = 2;
-            this.foundLabel.Text = "Found:";
-            this.foundLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // foundNum
-            // 
-            this.foundNum.AutoSize = true;
-            this.foundNum.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.foundNum.Location = new System.Drawing.Point(103, 55);
-            this.foundNum.Name = "foundNum";
-            this.foundNum.Size = new System.Drawing.Size(457, 29);
-            this.foundNum.TabIndex = 3;
-            this.foundNum.Text = "num";
-            this.foundNum.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // SearchForm
             // 
