@@ -49,6 +49,8 @@
             this.binaryCheckCheck = new System.Windows.Forms.CheckBox();
             this.wildRadioButton = new System.Windows.Forms.RadioButton();
             this.regRadioButton = new System.Windows.Forms.RadioButton();
+            this.folderCheck = new System.Windows.Forms.CheckBox();
+            this.caseCheck = new System.Windows.Forms.CheckBox();
             this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
             this.foundNum = new System.Windows.Forms.Label();
             this.foundLabel = new System.Windows.Forms.Label();
@@ -58,8 +60,6 @@
             this.elapsedTime = new System.Windows.Forms.Label();
             this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.elapsedTimeTimer = new System.Windows.Forms.Timer(this.components);
-            this.folderCheck = new System.Windows.Forms.CheckBox();
-            this.caseCheck = new System.Windows.Forms.CheckBox();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
@@ -331,6 +331,30 @@
             this.regRadioButton.Text = "Regexp";
             this.regRadioButton.UseVisualStyleBackColor = true;
             // 
+            // folderCheck
+            // 
+            this.folderCheck.AutoSize = true;
+            this.folderCheck.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.folderCheck.Location = new System.Drawing.Point(3, 57);
+            this.folderCheck.Name = "folderCheck";
+            this.folderCheck.Size = new System.Drawing.Size(121, 21);
+            this.folderCheck.TabIndex = 4;
+            this.folderCheck.Text = "Folders";
+            this.folderCheck.UseVisualStyleBackColor = true;
+            this.folderCheck.CheckedChanged += new System.EventHandler(this.folderCheck_CheckedChanged);
+            // 
+            // caseCheck
+            // 
+            this.caseCheck.AutoSize = true;
+            this.caseCheck.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.caseCheck.Location = new System.Drawing.Point(3, 84);
+            this.caseCheck.Name = "caseCheck";
+            this.caseCheck.Size = new System.Drawing.Size(121, 21);
+            this.caseCheck.TabIndex = 5;
+            this.caseCheck.Text = "Case sensitive";
+            this.caseCheck.UseVisualStyleBackColor = true;
+            this.caseCheck.CheckedChanged += new System.EventHandler(this.caseCheck_CheckedChanged);
+            // 
             // tableLayoutPanel5
             // 
             this.tableLayoutPanel5.ColumnCount = 2;
@@ -428,32 +452,8 @@
             // 
             // elapsedTimeTimer
             // 
-            this.elapsedTimeTimer.Interval = 200;
+            this.elapsedTimeTimer.Interval = 300;
             this.elapsedTimeTimer.Tick += new System.EventHandler(this.elapsedTimeTimer_Tick);
-            // 
-            // folderCheck
-            // 
-            this.folderCheck.AutoSize = true;
-            this.folderCheck.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.folderCheck.Location = new System.Drawing.Point(3, 57);
-            this.folderCheck.Name = "folderCheck";
-            this.folderCheck.Size = new System.Drawing.Size(121, 21);
-            this.folderCheck.TabIndex = 4;
-            this.folderCheck.Text = "Folders";
-            this.folderCheck.UseVisualStyleBackColor = true;
-            this.folderCheck.CheckedChanged += new System.EventHandler(this.folderCheck_CheckedChanged);
-            // 
-            // caseCheck
-            // 
-            this.caseCheck.AutoSize = true;
-            this.caseCheck.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.caseCheck.Location = new System.Drawing.Point(3, 84);
-            this.caseCheck.Name = "caseCheck";
-            this.caseCheck.Size = new System.Drawing.Size(121, 21);
-            this.caseCheck.TabIndex = 5;
-            this.caseCheck.Text = "Case sensitive";
-            this.caseCheck.UseVisualStyleBackColor = true;
-            this.caseCheck.CheckedChanged += new System.EventHandler(this.caseCheck_CheckedChanged);
             // 
             // SearchForm
             // 

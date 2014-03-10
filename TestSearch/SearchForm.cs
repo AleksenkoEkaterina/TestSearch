@@ -185,6 +185,7 @@ namespace TestSearch
             TreeSearchBackground(dir, template, e, inText, binaryCheck, folders, caseSensitive);
             if(last_name!="")
                 backgroundWorker.ReportProgress(0, new object[]{last_name, (int?)p_num});
+            if (queue.Count > 0) flushQueue();
             time.Reset();
             addingtime.Reset();
         }
@@ -218,8 +219,6 @@ namespace TestSearch
                 {
                     f_num++;
                     foundNum.Text = f_num.ToString();
-                    resultView.Update();
-                    foundNum.Update();
                 }
             }
             else if(state == 0)
@@ -248,9 +247,21 @@ namespace TestSearch
             return "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
         }
 
+        Queue<string> queue = new Queue<string>();
+        private void flushQueue()
+        {
+            foreach (string str in queue)
+                backgroundWorker.ReportProgress(100, str);
+            Thread.Sleep(50); //Let the GUI some sleep
+            queue.Clear();
+            addingtime.Restart();
+            time.Restart();
+        }
+
         private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck, bool? folders, bool? caseSensitive)
         {
-            DirectoryInfo[] subDirs = { };      
+            DirectoryInfo[] subDirs = { };
+            int found = 0;
             try
             {
                 subDirs = directory.GetDirectories();
@@ -276,6 +287,20 @@ namespace TestSearch
                 e.Cancel=true;
                 return;
             }
+
+            if(queue.Count>200)
+            {
+                
+                foreach(string str in queue)
+                {
+                    backgroundWorker.ReportProgress(100, str);     
+                }
+                Thread.Sleep(20);
+                queue.Clear();
+                addingtime.Restart();
+                time.Restart();
+            }
+
             foreach (DirectoryInfo dir in subDirs)
             {
                 if (folders == true)
@@ -285,10 +310,19 @@ namespace TestSearch
                     else m = Regex.Match(dir.Name, pattern);
                     if (m.Success)
                     {
-                        if (addingtime.ElapsedMilliseconds < 5) Thread.Sleep(5);
-                        backgroundWorker.ReportProgress(100, dir.FullName);
-                        addingtime.Restart();
-                        time.Restart();
+                        if (addingtime.ElapsedMilliseconds > 50)
+                        {
+                            if (queue.Count > 0)
+                                backgroundWorker.ReportProgress(100, queue.Dequeue());
+                            backgroundWorker.ReportProgress(100, dir.FullName);
+                            addingtime.Restart();
+                            time.Restart();
+                        }
+                        else
+                        {
+                            queue.Enqueue(dir.FullName);
+                            if (queue.Count > 100) flushQueue();       
+                        }
                     }
                 }
                 TreeSearchBackground(dir, pattern, e, inText, binaryCheck, folders, caseSensitive);
@@ -315,7 +349,7 @@ namespace TestSearch
             foreach (FileInfo file in files)
             {
                 p_num++;
-                if (time.ElapsedMilliseconds > 2)
+                if (time.ElapsedMilliseconds > 60)
                 {
                     object[] ar = new object[] { file.FullName, (int?)p_num };
                     backgroundWorker.ReportProgress(0, ar); //We'll lose some filenames here...
@@ -334,13 +368,38 @@ namespace TestSearch
                 else m = Regex.Match(file.Name, pattern);
                 if (m.Success)
                 {
-                    if (addingtime.ElapsedMilliseconds < 5) Thread.Sleep(5);
-                    backgroundWorker.ReportProgress(100, file.FullName);
-                    time.Restart();
-                    addingtime.Restart();
+                    found++;
+                    if (addingtime.ElapsedMilliseconds > 50)
+                    {
+                        backgroundWorker.ReportProgress(100, file.FullName);
+                        if (queue.Count > 0)
+                            backgroundWorker.ReportProgress(100, queue.Dequeue());
+                        time.Restart();
+                        addingtime.Restart();
+                    }
+                    else
+                    {
+                        queue.Enqueue(file.FullName);
+                        if (queue.Count > 100) flushQueue();
+                    }
+
                 }
-                if(inText==true)inTextSearch(file, e, pattern, binaryCheck, caseSensitive);
+                if (inText == true)found+=inTextSearch(file, e, pattern, binaryCheck, caseSensitive);
+                
             }
+
+            if (addingtime.ElapsedMilliseconds > 50)
+            {
+                if (queue.Count > 0)
+                    backgroundWorker.ReportProgress(100, queue.Dequeue());
+                time.Restart();
+                addingtime.Restart();
+            }
+
+            
+                
+
+                
               
             if (backgroundWorker.CancellationPending)
             {
@@ -368,7 +427,7 @@ namespace TestSearch
             }
             return Encoding.Default;
         }
-        private void inTextSearch(FileInfo file, DoWorkEventArgs e, string pattern, bool? binaryCheck, bool? caseSensitive)
+        private int inTextSearch(FileInfo file, DoWorkEventArgs e, string pattern, bool? binaryCheck, bool? caseSensitive)
         {
             bool detectedUTF = false;
             Encoding enc = Encoding.Default;
@@ -393,7 +452,7 @@ namespace TestSearch
                                 if (backgroundWorker.CancellationPending)
                                 {
                                     e.Cancel = true;
-                                    return;
+                                    return 0;
                                 }
                                 int read = reader.Read(buffer, 0, 8192);
                                 string contents = new string(buffer, 0, read);
@@ -404,11 +463,20 @@ namespace TestSearch
                                 else m = Regex.Match(contents, pattern);
                                 if (m.Success)
                                 {
-                                    if (addingtime.ElapsedMilliseconds < 5) Thread.Sleep(5);
-                                    backgroundWorker.ReportProgress(100, file.FullName);
-                                    time.Restart();
-                                    addingtime.Restart();
-                                    return;
+                                    if (addingtime.ElapsedMilliseconds > 50)
+                                    {
+                                        if (queue.Count > 0)
+                                            backgroundWorker.ReportProgress(100, queue.Dequeue());
+                                        backgroundWorker.ReportProgress(100, file.FullName);
+                                        time.Restart();
+                                        addingtime.Restart();
+                                    }
+                                    else
+                                    {
+                                        queue.Enqueue(file.FullName);
+                                        if (queue.Count > 100) flushQueue();
+                                    }
+                                    return 1;
                                 }
                             }
                         }
@@ -431,6 +499,7 @@ namespace TestSearch
             {
                 Console.Error.WriteLine("Internal error: " + file.FullName);
             }
+            return 0;
         }
 
         private void setInterfaceEnabled(bool value)
@@ -616,7 +685,9 @@ namespace TestSearch
 
         private void elapsedTimeTimer_Tick(object sender, EventArgs e)
         {
-            elapsedTime.Text = elapsedTimeWatch.Elapsed.ToString(@"hh\:mm\:ss\.fff");
+            elapsedTime.Text = elapsedTimeWatch.Elapsed.ToString(@"hh\:mm\:ss\.f");
+            foundNum.Update();
+            resultView.Update();
             elapsedTime.Update();
         }
 
