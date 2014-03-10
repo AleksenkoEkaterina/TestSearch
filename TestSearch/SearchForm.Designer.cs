@@ -452,7 +452,7 @@
             // 
             // elapsedTimeTimer
             // 
-            this.elapsedTimeTimer.Interval = 300;
+            this.elapsedTimeTimer.Interval = 200;
             this.elapsedTimeTimer.Tick += new System.EventHandler(this.elapsedTimeTimer_Tick);
             // 
             // SearchForm

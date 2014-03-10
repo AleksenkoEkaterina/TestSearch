@@ -57,6 +57,19 @@ namespace TestSearch
             }
         }
 
+        private int countLeaves(TreeNode node)
+        {
+            int result = 0;
+            if (node.Nodes.Count > 0)
+            {
+                foreach (TreeNode subnode in node.Nodes)
+                {
+                    result += countLeaves(subnode);
+                }
+                return result;
+            }
+            else return 1;
+        }
         private bool addToTree(string fullPath)
         {
             FileAttributes attr; //Let's validate our path
@@ -227,7 +240,7 @@ namespace TestSearch
                 path = ar[0] as string;
                 int? num = ar[1] as int?;
                 processingFileLabel.Text = shortenPath(path, 64);
-                processedNum.Text = num.ToString();
+                if(num>0)processedNum.Text = num.ToString();
                 processingFileLabel.Update();
                 processedNum.Update();
             }
@@ -236,32 +249,43 @@ namespace TestSearch
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             setInterfaceEnabled(true);
-
             elapsedTimeWatch.Reset();
             elapsedTimeTimer.Stop();
-        }
+       }
 
 
         public static string WildcardToRegex(string pattern)
         {
-            return "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
+            string head = "", tail="" ;
+            if (pattern[0] != '*') head = "^";
+            else pattern = pattern.Remove(0, 1);
+            if (pattern[pattern.Length - 1] != '*') tail = "$";
+            else pattern = pattern.Remove(pattern.Length - 1, 1);
+            return head + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + tail;
+            
+          //  return "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".")+ "$";
         }
 
         Queue<string> queue = new Queue<string>();
         private void flushQueue()
         {
+           
             foreach (string str in queue)
+            {
+                Thread.Sleep(1);
                 backgroundWorker.ReportProgress(100, str);
-            Thread.Sleep(50); //Let the GUI some sleep
+                
+                
+            }
+             //Let the GUI some sleep
             queue.Clear();
             addingtime.Restart();
-            time.Restart();
         }
 
         private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck, bool? folders, bool? caseSensitive)
         {
             DirectoryInfo[] subDirs = { };
-            int found = 0;
+           
             try
             {
                 subDirs = directory.GetDirectories();
@@ -284,22 +308,13 @@ namespace TestSearch
             }
             if(backgroundWorker.CancellationPending)
             {
+                if (queue.Count > 0) flushQueue();
                 e.Cancel=true;
                 return;
             }
 
-            if(queue.Count>200)
-            {
-                
-                foreach(string str in queue)
-                {
-                    backgroundWorker.ReportProgress(100, str);     
-                }
-                Thread.Sleep(20);
-                queue.Clear();
-                addingtime.Restart();
-                time.Restart();
-            }
+            if (queue.Count > 100)
+                flushQueue();
 
             foreach (DirectoryInfo dir in subDirs)
             {
@@ -359,6 +374,7 @@ namespace TestSearch
                 last_name = file.FullName; //For the last report
                 if (backgroundWorker.CancellationPending)
                 {
+                    if (queue.Count > 0) flushQueue();
                     e.Cancel = true;
                     return;
                 }
@@ -368,13 +384,11 @@ namespace TestSearch
                 else m = Regex.Match(file.Name, pattern);
                 if (m.Success)
                 {
-                    found++;
                     if (addingtime.ElapsedMilliseconds > 50)
                     {
                         backgroundWorker.ReportProgress(100, file.FullName);
                         if (queue.Count > 0)
                             backgroundWorker.ReportProgress(100, queue.Dequeue());
-                        time.Restart();
                         addingtime.Restart();
                     }
                     else
@@ -384,7 +398,7 @@ namespace TestSearch
                     }
 
                 }
-                if (inText == true)found+=inTextSearch(file, e, pattern, binaryCheck, caseSensitive);
+                if (inText == true)inTextSearch(file, e, pattern, binaryCheck, caseSensitive);
                 
             }
 
@@ -392,17 +406,12 @@ namespace TestSearch
             {
                 if (queue.Count > 0)
                     backgroundWorker.ReportProgress(100, queue.Dequeue());
-                time.Restart();
                 addingtime.Restart();
-            }
-
-            
-                
-
-                
+            }           
               
             if (backgroundWorker.CancellationPending)
             {
+                if (queue.Count > 0) flushQueue();
                 e.Cancel = true;
                 return;
             }
@@ -451,12 +460,12 @@ namespace TestSearch
                             {
                                 if (backgroundWorker.CancellationPending)
                                 {
+                                    if (queue.Count > 0) flushQueue();
                                     e.Cancel = true;
                                     return 0;
                                 }
                                 int read = reader.Read(buffer, 0, 8192);
                                 string contents = new string(buffer, 0, read);
-                                if (reader.CurrentEncoding == Encoding.UTF8) detectedUTF = true;
                                 if (binaryCheck == true && doBinaryCheck(contents) == true) break;
                                 Match m;
                                 if (caseSensitive == false) m = Regex.Match(contents, pattern, RegexOptions.IgnoreCase);
@@ -466,9 +475,8 @@ namespace TestSearch
                                     if (addingtime.ElapsedMilliseconds > 50)
                                     {
                                         if (queue.Count > 0)
-                                            backgroundWorker.ReportProgress(100, queue.Dequeue());
+                                        backgroundWorker.ReportProgress(100, queue.Dequeue());
                                         backgroundWorker.ReportProgress(100, file.FullName);
-                                        time.Restart();
                                         addingtime.Restart();
                                     }
                                     else
