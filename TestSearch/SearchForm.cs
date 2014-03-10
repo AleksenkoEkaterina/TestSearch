@@ -11,6 +11,7 @@ using System.IO;
 using System.Threading;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace TestSearch
 {
@@ -340,12 +341,38 @@ namespace TestSearch
         {
            return str.Contains("\0\0"); //Quite simple
         }
+
+        bool detectXML(string test)
+        {
+            if (test[0]!='<') return false;
+            else
+            {
+                try
+                {
+                    XmlDocument xml = new XmlDocument();
+                    xml.LoadXml(test);
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
         private void inTextSearch(FileInfo file, DoWorkEventArgs e, string pattern, bool? binaryCheck, bool? caseSensitive)
         {
             bool detectedUTF = false;
-            using (StreamReader reader = new StreamReader(file.FullName, Encoding.Default, true, 8192))
+            using (StreamReader reader = new StreamReader(file.FullName, Encoding.UTF8))
             {
-                char[] buffer = new char[8192];
+                string test = reader.ReadLine();
+                if (reader.EndOfStream == false && test.Length > 0)
+                    detectedUTF = detectXML(test);
+            }
+            Encoding enc = Encoding.Default;
+            if (detectedUTF) enc = Encoding.UTF8;
+            using (StreamReader reader = new StreamReader(file.FullName, enc, !detectedUTF, 8192))
+            {
+                char[] buffer = new char[8192];         
                 while (reader.EndOfStream == false)
                 {
                     if (backgroundWorker.CancellationPending)
@@ -368,10 +395,11 @@ namespace TestSearch
                     }
                 }
             }
-            //Cannot auto-detect encoding on fb2 files
+            if (detectedUTF) return;
+            //Cannot auto-detect encoding on xml files
+            //Should ask ms programmers why
             //Assume utf-8
             //Time, time...
-            if (detectedUTF) return;
             using (StreamReader reader = new StreamReader(file.FullName, Encoding.UTF8, true, 8192))
             {
                 char[] buffer = new char[8192];
