@@ -163,7 +163,7 @@ namespace TestSearch
 
         private Stopwatch time = new Stopwatch();
         private int p_num;
-        string last_name;
+        string last_name="";
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             List<object> obj_list = e.Argument as List<object>;
@@ -178,7 +178,7 @@ namespace TestSearch
             p_num = 0;
             time.Start();
             TreeSearchBackground(dir, template, e, inText, binaryCheck, folders, caseSensitive);
-            backgroundWorker.ReportProgress(0, new object[]{last_name, (int?)p_num});
+            if(last_name!="")backgroundWorker.ReportProgress(0, new object[]{last_name, (int?)p_num});
             time.Reset();
         }
 
@@ -229,9 +229,7 @@ namespace TestSearch
 
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            searchButton.Enabled = true;
-            dirTextBox.Enabled = true;
-            templateTextBox.Enabled = true;
+            setInterfaceEnabled(true);
 
             elapsedTimeWatch.Reset();
             elapsedTimeTimer.Stop();
@@ -344,7 +342,37 @@ namespace TestSearch
         }
         private void inTextSearch(FileInfo file, DoWorkEventArgs e, string pattern, bool? binaryCheck, bool? caseSensitive)
         {
+            bool detectedUTF = false;
             using (StreamReader reader = new StreamReader(file.FullName, Encoding.Default, true, 8192))
+            {
+                char[] buffer = new char[8192];
+                while (reader.EndOfStream == false)
+                {
+                    if (backgroundWorker.CancellationPending)
+                    {
+                        e.Cancel = true;
+                        return;
+                    }
+                    int read = reader.Read(buffer, 0, 8192);
+                    string contents = Regex.Escape(new string(buffer, 0, read));
+                    if (reader.CurrentEncoding == Encoding.UTF8) detectedUTF = true;
+                    if (binaryCheck == true && doBinaryCheck(contents) == true) break;
+                    Match m;
+                    if (caseSensitive == false) m = Regex.Match(contents, pattern, RegexOptions.IgnoreCase);
+                    else m = Regex.Match(contents, pattern);
+                    if (m.Success)
+                    {
+                        backgroundWorker.ReportProgress(100, file.FullName);
+                        time.Restart();
+                        return;
+                    }
+                }
+            }
+            //Cannot auto-detect encoding on fb2 files
+            //Assume utf-8
+            //Time, time...
+            if (detectedUTF) return;
+            using (StreamReader reader = new StreamReader(file.FullName, Encoding.UTF8, true, 8192))
             {
                 char[] buffer = new char[8192];
                 while (reader.EndOfStream == false)
@@ -364,12 +392,33 @@ namespace TestSearch
                     {
                         backgroundWorker.ReportProgress(100, file.FullName);
                         time.Restart();
-                        break;
+                        return;
                     }
                 }
             }
         }
 
+        private void setInterfaceEnabled(bool value)
+        {
+            searchButton.Enabled = value;
+            browseButton.Enabled = value;
+            stopButton.Enabled = !value;
+
+            dirTextBox.Enabled = value;
+            templateTextBox.Enabled = value;
+
+            caseCheck.Enabled = value;
+            if (!value || !inTextCheck.Checked) binaryCheckCheck.Enabled = false;
+            else binaryCheckCheck.Enabled = true;
+            folderCheck.Enabled = value;
+            inTextCheck.Enabled = value;
+
+            wildRadioButton.Enabled = value;
+            regRadioButton.Enabled = value;
+            
+            
+
+        }
         private void startSearch()
         {
             string folderPath = Properties.Settings.Default.targetDirectory;
@@ -425,10 +474,7 @@ namespace TestSearch
             arguments.Add((bool?)folderCheck.Checked);
             arguments.Add((bool?)caseCheck.Checked);
             while (backgroundWorker.IsBusy) { } //Wait for it
-            searchButton.Enabled = false;
-            stopButton.Enabled = true;
-            dirTextBox.Enabled = false;
-            templateTextBox.Enabled = false;
+            setInterfaceEnabled(false);
             f_num = 0;
             processedNum.Text = 0.ToString();
             foundNum.Text = f_num.ToString();
