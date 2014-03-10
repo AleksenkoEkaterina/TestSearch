@@ -163,7 +163,9 @@ namespace TestSearch
         }
 
         private Stopwatch time = new Stopwatch();
+        private Stopwatch addingtime = new Stopwatch();
         private int p_num;
+        private int added = 0;
         string last_name="";
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -178,9 +180,13 @@ namespace TestSearch
             if (regexp == false) template = WildcardToRegex(template);
             p_num = 0;
             time.Start();
+            addingtime.Start();
+           
             TreeSearchBackground(dir, template, e, inText, binaryCheck, folders, caseSensitive);
-            if(last_name!="")backgroundWorker.ReportProgress(0, new object[]{last_name, (int?)p_num});
+            if(last_name!="")
+                backgroundWorker.ReportProgress(0, new object[]{last_name, (int?)p_num});
             time.Reset();
+            addingtime.Reset();
         }
 
         private string shortenPath(string path, int maxChars)
@@ -241,6 +247,7 @@ namespace TestSearch
         {
             return "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
         }
+
         private void TreeSearchBackground(DirectoryInfo directory, string pattern, DoWorkEventArgs e, bool? inText, bool? binaryCheck, bool? folders, bool? caseSensitive)
         {
             DirectoryInfo[] subDirs = { };      
@@ -278,7 +285,9 @@ namespace TestSearch
                     else m = Regex.Match(dir.Name, pattern);
                     if (m.Success)
                     {
+                        if (addingtime.ElapsedMilliseconds < 5) Thread.Sleep(5);
                         backgroundWorker.ReportProgress(100, dir.FullName);
+                        addingtime.Restart();
                         time.Restart();
                     }
                 }
@@ -313,7 +322,7 @@ namespace TestSearch
                     //...but no one can read this fast anyway
                     time.Restart();
                 }
-                else last_name = file.FullName; //For the last report
+                last_name = file.FullName; //For the last report
                 if (backgroundWorker.CancellationPending)
                 {
                     e.Cancel = true;
@@ -325,8 +334,10 @@ namespace TestSearch
                 else m = Regex.Match(file.Name, pattern);
                 if (m.Success)
                 {
+                    if (addingtime.ElapsedMilliseconds < 5) Thread.Sleep(5);
                     backgroundWorker.ReportProgress(100, file.FullName);
                     time.Restart();
+                    addingtime.Restart();
                 }
                 if(inText==true)inTextSearch(file, e, pattern, binaryCheck, caseSensitive);
             }
@@ -342,87 +353,83 @@ namespace TestSearch
            return str.Contains("\0\0"); //Quite simple
         }
 
-        bool detectXML(string test)
+        Encoding detectXML(string test)
         {
-            if (test[0]!='<') return false;
+            if (test[0]!='<') return Encoding.Default;
             else
             {
-                try
+                Match m=Regex.Match(test, "^<\\?xml.+?encoding=[\"']([^\"']+)[\"'].*?\\?>");           
+                if (m.Success)
                 {
-                    XmlDocument xml = new XmlDocument();
-                    xml.LoadXml(test);
-                    return true;
-                }
-                catch
-                {
-                    return false;
+                    return Encoding.UTF8;
+                    //Other unicode will be detected by BOM
+                    //Other codepages won't be detected anyway
                 }
             }
+            return Encoding.Default;
         }
         private void inTextSearch(FileInfo file, DoWorkEventArgs e, string pattern, bool? binaryCheck, bool? caseSensitive)
         {
             bool detectedUTF = false;
-            using (StreamReader reader = new StreamReader(file.FullName, Encoding.UTF8))
-            {
-                string test = reader.ReadLine();
-                if (reader.EndOfStream == false && test.Length > 0)
-                    detectedUTF = detectXML(test);
-            }
             Encoding enc = Encoding.Default;
-            if (detectedUTF) enc = Encoding.UTF8;
-            using (StreamReader reader = new StreamReader(file.FullName, enc, !detectedUTF, 8192))
+            try
             {
-                char[] buffer = new char[8192];         
-                while (reader.EndOfStream == false)
+                using (FileStream fs = new FileStream(file.FullName, FileMode.Open))
                 {
-                    if (backgroundWorker.CancellationPending)
+                    using (StreamReader testreader = new StreamReader(fs, Encoding.UTF8))
                     {
-                        e.Cancel = true;
-                        return;
-                    }
-                    int read = reader.Read(buffer, 0, 8192);
-                    string contents = Regex.Escape(new string(buffer, 0, read));
-                    if (reader.CurrentEncoding == Encoding.UTF8) detectedUTF = true;
-                    if (binaryCheck == true && doBinaryCheck(contents) == true) break;
-                    Match m;
-                    if (caseSensitive == false) m = Regex.Match(contents, pattern, RegexOptions.IgnoreCase);
-                    else m = Regex.Match(contents, pattern);
-                    if (m.Success)
-                    {
-                        backgroundWorker.ReportProgress(100, file.FullName);
-                        time.Restart();
-                        return;
+                        string test = testreader.ReadLine();
+
+                        if (testreader.EndOfStream == false && test.Length > 0)
+                            enc = detectXML(test);
+
+                        fs.Position = 0;
+                        if (enc != Encoding.Default) detectedUTF = true;
+                        using (StreamReader reader = new StreamReader(fs, enc, !detectedUTF, 8192))
+                        {
+                            char[] buffer = new char[8192];
+                            while (reader.EndOfStream == false)
+                            {
+                                if (backgroundWorker.CancellationPending)
+                                {
+                                    e.Cancel = true;
+                                    return;
+                                }
+                                int read = reader.Read(buffer, 0, 8192);
+                                string contents = new string(buffer, 0, read);
+                                if (reader.CurrentEncoding == Encoding.UTF8) detectedUTF = true;
+                                if (binaryCheck == true && doBinaryCheck(contents) == true) break;
+                                Match m;
+                                if (caseSensitive == false) m = Regex.Match(contents, pattern, RegexOptions.IgnoreCase);
+                                else m = Regex.Match(contents, pattern);
+                                if (m.Success)
+                                {
+                                    if (addingtime.ElapsedMilliseconds < 5) Thread.Sleep(5);
+                                    backgroundWorker.ReportProgress(100, file.FullName);
+                                    time.Restart();
+                                    addingtime.Restart();
+                                    return;
+                                }
+                            }
+                        }
                     }
                 }
             }
-            if (detectedUTF) return;
-            //Cannot auto-detect encoding on xml files
-            //Should ask ms programmers why
-            //Assume utf-8
-            //Time, time...
-            using (StreamReader reader = new StreamReader(file.FullName, Encoding.UTF8, true, 8192))
+            catch(System.Security.SecurityException ex)
             {
-                char[] buffer = new char[8192];
-                while (reader.EndOfStream == false)
-                {
-                    if (backgroundWorker.CancellationPending)
-                    {
-                        e.Cancel = true;
-                        return;
-                    }
-                    int read = reader.Read(buffer, 0, 8192);
-                    string contents = Regex.Escape(new string(buffer, 0, read));
-                    if (binaryCheck == true && doBinaryCheck(contents) == true) break;
-                    Match m;
-                    if (caseSensitive == false) m = Regex.Match(contents, pattern, RegexOptions.IgnoreCase);
-                    else m = Regex.Match(contents, pattern);
-                    if (m.Success)
-                    {
-                        backgroundWorker.ReportProgress(100, file.FullName);
-                        time.Restart();
-                        return;
-                    }
-                }
+                Console.Error.WriteLine("Security exception: " + file.FullName);
+            }
+            catch(IOException ex)
+            {
+                Console.Error.WriteLine("Cannot access file: " + file.FullName);
+            }
+            catch(NotSupportedException ex)
+            {
+                Console.Error.WriteLine("Not supported: " + file.FullName);
+            }
+            catch
+            {
+                Console.Error.WriteLine("Internal error: " + file.FullName);
             }
         }
 
