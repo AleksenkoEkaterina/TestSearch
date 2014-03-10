@@ -458,7 +458,7 @@ namespace TestSearch
         {
             string folderPath = Properties.Settings.Default.targetDirectory;
             
-            resultView.Nodes.Clear();
+            
             FileAttributes attr; //Let's validate our path
             try
             {
@@ -497,9 +497,13 @@ namespace TestSearch
             }
 
             bool isDirectory = ((attr & FileAttributes.Directory) == FileAttributes.Directory);
-            folderPath = folderPath.TrimEnd(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
-            if (!isDirectory) folderPath = folderPath.Remove(folderPath.LastIndexOf(Path.DirectorySeparatorChar) + 1);
+           // folderPath = folderPath.TrimEnd(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
+            if (!isDirectory)
+            {
+                MessageBox.Show("The path is not a directory", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return;
 
+            }//folderPath = folderPath.Remove(folderPath.LastIndexOf(Path.DirectorySeparatorChar) + 1);
             List<object> arguments = new List<object>();
             arguments.Add(new DirectoryInfo(folderPath));
             arguments.Add(templateTextBox.Text);
@@ -510,6 +514,7 @@ namespace TestSearch
             arguments.Add((bool?)caseCheck.Checked);
             while (backgroundWorker.IsBusy) { } //Wait for it
             setInterfaceEnabled(false);
+            resultView.Nodes.Clear();
             f_num = 0;
             processedNum.Text = 0.ToString();
             foundNum.Text = f_num.ToString();
